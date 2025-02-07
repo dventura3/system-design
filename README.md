@@ -245,19 +245,22 @@ Earlier we learned about IP addresses that enable every machine to connect with 
 
 This brings us to Domain Name System (DNS) which is a hierarchical and decentralized naming system used for translating human-readable domain names to IP addresses.
 
+
 ## How DNS works
 
 ![how-dns-works](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-I/domain-name-system/how-dns-works.png)
 
-DNS lookup involves the following eight steps:
+The process of DNS resolution involves converting a hostname (such as www.example.com) into a computer-friendly IP address (such as 192.168.1.1). An IP address is given to each device on the Internet, and that address is necessary to find the appropriate Internet device - like a street address is used to find a particular home.
 
-1. A client types [example.com](http://example.com) into a web browser, the query travels to the internet and is received by a DNS resolver.
-2. The resolver then recursively queries a DNS root nameserver.
-3. The root server responds to the resolver with the address of a Top-Level Domain (TLD).
+DNS lookup (also said DNS resolution) involves the following eight steps:
+
+1. A user types `example.com` into a web browser and the query travels into the Internet and is received by a DNS recursive resolver.
+2. The resolver then queries a DNS root nameserver (.).
+3. The root server then responds to the resolver with the address of a Top Level Domain (TLD) DNS server (such as .com or .net), which stores the information for its domains. When searching for example.com, our request is pointed toward the `.com` TLD.
 4. The resolver then makes a request to the `.com` TLD.
-5. The TLD server then responds with the IP address of the domain's nameserver, [example.com](http://example.com).
-6. Lastly, the recursive resolver sends a query to the domain's nameserver.
-7. The IP address for [example.com](http://example.com) is then returned to the resolver from the nameserver.
+5. The TLD server then responds with the IP address of the domain’s nameserver, `example.com`.
+6. Lastly, the recursive resolver sends a query to the domain’s nameserver.
+7. The IP address for `example.com` is then returned to the resolver from the nameserver.
 8. The DNS resolver then responds to the web browser with the IP address of the domain requested initially.
 
 Once the IP address has been resolved, the client should be able to request content from the resolved IP address. For example, the resolved IP may return a webpage to be rendered in the browser.
@@ -268,9 +271,11 @@ Now, let's look at the four key groups of servers that make up the DNS infrastru
 
 ### DNS Resolver
 
-A DNS resolver (also known as a DNS recursive resolver) is the first stop in a DNS query. The recursive resolver acts as a middleman between a client and a DNS nameserver. After receiving a DNS query from a web client, a recursive resolver will either respond with cached data, or send a request to a root nameserver, followed by another request to a TLD nameserver, and then one last request to an authoritative nameserver. After receiving a response from the authoritative nameserver containing the requested IP address, the recursive resolver then sends a response to the client.
+A DNS resolver (also known as a DNS recursor) is the first stop in a DNS query. The recursive resolver acts as a middleman between a client and a DNS nameserver. The DNS recursor is a server designed to receive queries from client machines through applications such as web browsers.
 
-### DNS root server
+After receiving a DNS query from a web client (the browser), a DNS resolver will either respond with cached data, or send a request to a root nameserver, followed by another request to a TLD nameserver, and then one last request to an authoritative nameserver. After receiving a response from the authoritative nameserver containing the requested IP address, the recursive resolver then sends a response to the client.
+
+### DNS root nameserver
 
 A root server accepts a recursive resolver's query which includes a domain name, and the root nameserver responds by directing the recursive resolver to a TLD nameserver, based on the extension of that domain (`.com`, `.net`, `.org`, etc.). The root nameservers are overseen by a nonprofit called the [Internet Corporation for Assigned Names and Numbers (ICANN)](https://www.icann.org).
 
@@ -288,6 +293,11 @@ Management of TLD nameservers is handled by the [Internet Assigned Numbers Autho
 ### Authoritative DNS server
 
 The authoritative nameserver is usually the resolver's last step in the journey for an IP address. The authoritative nameserver contains information specific to the domain name it serves (e.g. [google.com](http://google.com)) and it can provide a recursive resolver with the IP address of that server found in the DNS A record, or if the domain has a CNAME record (alias) it will provide the recursive resolver with an alias domain, at which point the recursive resolver will have to perform a whole new DNS lookup to procure a record from an authoritative nameserver (often an A record containing an IP address). If it cannot find the domain, returns the NXDOMAIN message.
+
+It’s worth mentioning that in instances where the query is for a subdomain such as `foo.example.com` or `blog.cloudflare.com`, an additional  Authoritative DNS server will be added to the sequence after the first authoritative nameserver, which is responsible for storing the subdomain’s `CNAME` record.
+
+![how-recursive-dns-works](./diagrams/dns_record_request_sequence_cname_subdomain.png)
+
 
 ## Query Types
 
