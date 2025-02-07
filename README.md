@@ -24,6 +24,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Availability](#availability)
   - [Scalability](#scalability)
   - [Storage](#storage)
+  - [Global vs Local Service](#global-vs-local-service)
 
 - **Chapter II**
 
@@ -954,6 +955,24 @@ A NAS (Network Attached Storage) is a storage device connected to a network that
 The Hadoop Distributed File System (HDFS) is a distributed file system designed to run on commodity hardware. HDFS is highly fault-tolerant and is designed to be deployed on low-cost hardware. HDFS provides high throughput access to application data and is suitable for applications that have large data sets. It has many similarities with existing distributed file systems.
 
 HDFS is designed to reliably store very large files across machines in a large cluster. It stores each file as a sequence of blocks, all blocks in a file except the last block are the same size. The blocks of a file are replicated for fault tolerance.
+
+# Global vs Local Service
+
+## Global Service
+
+Any changes that you make to global service while the Primary Region is selected will be applied across all Regions.
+For example if a DB service is global, it means that if you update the data in the Primary regions (Dallas for example), the same data is replicated in background in all the other regions supported by the DB service (Tokyo and London for example).
+
+IAM is a global service. The backend is deployed in different regions, but the service is a global service.
+This is achieved using replication of the DBs + specific network configuration to route the traffic from endpoints (Akamai settings).
+The deployment is done like a normal regional service (i.e. region by region), however the end-user is unknow/not aware about the different regions. On the user prospectives IAM is a global service.
+
+## Regional Service
+
+Any changes that you make to a feature in a Region will be applied only to that Region.
+Data are separated by region.
+
+
 
 # Databases and DBMS
 
