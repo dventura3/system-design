@@ -673,7 +673,13 @@ Here are some commonly used technologies for caching:
 
 # Content Delivery Network (CDN)
 
-A content delivery network (CDN) is a geographically distributed group of servers that work together to provide fast delivery of internet content. Generally, static files such as HTML/CSS/JS, photos, and videos are served from CDN.
+A content delivery network (CDN) is a geographically distributed group of servers that work together to provide fast delivery of internet content by caching content close to end users. Generally, CDN caches static files such as HTML/CSS/JS, photos, and videos.
+
+The advantage of using a CDN are:
+- **Improving website load time** - By distributing content closer to website visitors by using a nearby CDN server (among other optimizations), visitors experience faster page loading times
+- **Reducing bandwidth costs** - Bandwidth consumption costs for website hosting is a primary expense for websites. Through caching and other optimizations, CDNs are able to reduce the amount of data an origin server must provide, thus reducing hosting costs for website owners.
+- **Helping to prevent interruptions in service** - One of the important characteristics about a CDN is its ability to keep website content online in the face of the common network problems including hardware failures and network congestion. By load balancing Internet traffic, using intelligent failover, and by maintaining servers across many data centers, a CDN is designed to circumvent network congestion and be resilient against service interruption.
+- **Improving website security** - A CDN may improve security by providing DDoS mitigation, improvements to security certificates, and other optimizations.
 
 ![cdn-map](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-I/content-delivery-network/cdn-map.png)
 
