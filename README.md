@@ -1048,6 +1048,29 @@ A SQL (or relational) database is a collection of data items with pre-defined re
 
 Each row in a table could be marked with a unique identifier called a primary key, and rows among multiple tables can be made related using foreign keys. This data can be accessed in many different ways without re-organizing the database tables themselves. SQL databases usually follow the [ACID consistency model](https://karanpratapsingh.com/courses/system-design/acid-and-base-consistency-models#acid).
 
+Not all SQL databases strictly adhere to the ACID properties, but most relational databases do. ACID stands for Atomicity, Consistency, Isolation, and Durability, which are key principles for ensuring reliable transaction processing. Here's a brief overview of each property:
+- **Atomicity**: Transactions are all-or-nothing; if one part of a transaction fails, the entire transaction fails and the database state is left unchanged.
+- **Consistency**: Transactions bring the database from one valid state to another, maintaining database invariants.
+- **Isolation**: Transactions are executed in isolation from one another, ensuring that concurrent transactions do not affect each other's execution.
+- **Durability**: Once a transaction has been committed, it will remain so, even in the event of a system failure.
+SQL Databases and ACID
+
+Not all the relationals DBs have ACID properties. Some SQL databases or configurations may relax these properties for performance reasons. For example, certain MySQL storage engines (like MyISAM) do not fully support ACID properties. Additionally, some distributed SQL databases (such as Pig on top of Hadoop) may prioritize availability and partition tolerance over strict adherence to ACID.
+However, MySQL has the ACID property if a storage engine is used that implements it, such as InnoDB.
+Also, other traditional relational databases like PostgreSQL, Oracle, and Microsoft SQL Server implement ACID properties to ensure data integrity.
+
+The "opposite" of ACID properties are the **BASE** properties.
+With the increasing amount of data and high availability requirements, the approach to database design has also changed dramatically. To increase the ability to scale and at the same time be highly available, we move the "ACID" logic (i.e. the requirements for immediate consistency, data freshness, and accuracy) from the database to the servers. In this way, the database becomes more independent and focused on the actual process of storing data...while servers will implement the logic to have ACID properties.
+
+BASE stands for:
+- **Basic Availability**: the database appears to work most of the time.
+- **Soft-state**: stores don't have to be write-consistent, nor do different replicas have to be mutually consistent all the time.
+- **Eventual consistency**: the data might not be consistent immediately but eventually, it becomes consistent. Reads in the system are still possible even though they may not give the correct response due to inconsistency.
+
+**ACID vs BASE**
+There's no right answer to whether our application needs an ACID or a BASE consistency model. Both the models have been designed to satisfy different requirements. A fully ACID database is the perfect fit for use cases where data reliability and consistency are essential. BASE databases are more used in use cases where high availability is important and there is not need for immediate consistency.
+
+
 ## Materialized views
 
 A materialized view is a pre-computed data set derived from a query specification and stored for later use. Because the data is pre-computed, querying a materialized view is faster than executing a query against the base table of the view. This performance difference can be significant when a query is run frequently or is sufficiently complex.
