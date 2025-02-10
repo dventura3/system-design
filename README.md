@@ -1046,29 +1046,7 @@ Some common challenges faced while running databases at scale:
 
 A SQL (or relational) database is a collection of data items with pre-defined relationships between them. These items are organized as a set of tables with columns and rows. Tables are used to hold information about the objects to be represented in the database. Each column in a table holds a certain kind of data and a field stores the actual value of an attribute. The rows in the table represent a collection of related values of one object or entity.
 
-Each row in a table could be marked with a unique identifier called a primary key, and rows among multiple tables can be made related using foreign keys. This data can be accessed in many different ways without re-organizing the database tables themselves. SQL databases usually follow the [ACID consistency model](https://karanpratapsingh.com/courses/system-design/acid-and-base-consistency-models#acid).
-
-Not all SQL databases strictly adhere to the ACID properties, but most relational databases do. ACID stands for Atomicity, Consistency, Isolation, and Durability, which are key principles for ensuring reliable transaction processing. Here's a brief overview of each property:
-- **Atomicity**: Transactions are all-or-nothing; if one part of a transaction fails, the entire transaction fails and the database state is left unchanged.
-- **Consistency**: Transactions bring the database from one valid state to another, maintaining database invariants.
-- **Isolation**: Transactions are executed in isolation from one another, ensuring that concurrent transactions do not affect each other's execution.
-- **Durability**: Once a transaction has been committed, it will remain so, even in the event of a system failure.
-SQL Databases and ACID
-
-Not all the relationals DBs have ACID properties. Some SQL databases or configurations may relax these properties for performance reasons. For example, certain MySQL storage engines (like MyISAM) do not fully support ACID properties. Additionally, some distributed SQL databases (such as Pig on top of Hadoop) may prioritize availability and partition tolerance over strict adherence to ACID.
-However, MySQL has the ACID property if a storage engine is used that implements it, such as InnoDB.
-Also, other traditional relational databases like PostgreSQL, Oracle, and Microsoft SQL Server implement ACID properties to ensure data integrity.
-
-The "opposite" of ACID properties are the **BASE** properties.
-With the increasing amount of data and high availability requirements, the approach to database design has also changed dramatically. To increase the ability to scale and at the same time be highly available, we move the "ACID" logic (i.e. the requirements for immediate consistency, data freshness, and accuracy) from the database to the servers. In this way, the database becomes more independent and focused on the actual process of storing data...while servers will implement the logic to have ACID properties.
-
-BASE stands for:
-- **Basic Availability**: the database appears to work most of the time.
-- **Soft-state**: stores don't have to be write-consistent, nor do different replicas have to be mutually consistent all the time.
-- **Eventual consistency**: the data might not be consistent immediately but eventually, it becomes consistent. Reads in the system are still possible even though they may not give the correct response due to inconsistency.
-
-**ACID vs BASE**
-There's no right answer to whether our application needs an ACID or a BASE consistency model. Both the models have been designed to satisfy different requirements. A fully ACID database is the perfect fit for use cases where data reliability and consistency are essential. BASE databases are more used in use cases where high availability is important and there is not need for immediate consistency.
+Each row in a table could be marked with a unique identifier called a primary key, and rows among multiple tables can be made related using foreign keys. This data can be accessed in many different ways without re-organizing the database tables themselves. SQL databases usually follow the [ACID consistency model](https://karanpratapsingh.com/courses/system-design/acid-and-base-consistency-models#acid) as opposed to NoSQL DBs which often follow the BASE model. Details about ACID vs BASE model in the section below.
 
 
 ## Materialized views
@@ -1549,55 +1527,27 @@ Below are some disadvantages of denormalization:
 
 Let's discuss the ACID and BASE consistency models.
 
-## ACID
+Not all SQL databases strictly adhere to the ACID properties, but most relational databases do. ACID stands for Atomicity, Consistency, Isolation, and Durability, which are key principles for ensuring reliable transaction processing. Here's a brief overview of each property:
+- **Atomicity**: Transactions are all-or-nothing; if one part of a transaction fails, the entire transaction fails and the database state is left unchanged.
+- **Consistency**: Transactions bring the database from one valid state to another, maintaining database invariants.
+- **Isolation**: Transactions are executed in isolation from one another, ensuring that concurrent transactions do not affect each other's execution.
+- **Durability**: Once a transaction has been committed, it will remain so, even in the event of a system failure.
+SQL Databases and ACID
 
-The term ACID stands for Atomicity, Consistency, Isolation, and Durability. ACID properties are used for maintaining data integrity during transaction processing.
+Not all the relationals DBs have ACID properties. Some SQL databases or configurations may relax these properties for performance reasons. For example, certain MySQL storage engines (like MyISAM) do not fully support ACID properties. Additionally, some distributed SQL databases (such as Pig on top of Hadoop) may prioritize availability and partition tolerance over strict adherence to ACID.
+However, MySQL has the ACID property if a storage engine is used that implements it, such as InnoDB.
+Also, other traditional relational databases like PostgreSQL, Oracle, and Microsoft SQL Server implement ACID properties to ensure data integrity.
 
-In order to maintain consistency before and after a transaction relational databases follow ACID properties. Let us understand these terms:
+The "opposite" of ACID properties are the **BASE** properties.
+With the increasing amount of data and high availability requirements, the approach to database design has also changed dramatically. To increase the ability to scale and at the same time be highly available, we move the "ACID" logic (i.e. the requirements for immediate consistency, data freshness, and accuracy) from the database to the servers. In this way, the database becomes more independent and focused on the actual process of storing data...while servers will implement the logic to have ACID properties.
 
-### Atomic
+BASE stands for:
+- **Basic Availability**: the database appears to work most of the time.
+- **Soft-state**: stores don't have to be write-consistent, nor do different replicas have to be mutually consistent all the time.
+- **Eventual consistency**: the data might not be consistent immediately but eventually, it becomes consistent. Reads in the system are still possible even though they may not give the correct response due to inconsistency.
 
-All operations in a transaction succeed or every operation is rolled back.
-
-### Consistent
-
-On the completion of a transaction, the database is structurally sound.
-
-### Isolated
-
-Transactions do not contend with one another. Contentious access to data is moderated by the database so that transactions appear to run sequentially.
-
-### Durable
-
-Once the transaction has been completed and the writes and updates have been written to the disk, it will remain in the system even if a system failure occurs.
-
-## BASE
-
-With the increasing amount of data and high availability requirements, the approach to database design has also changed dramatically. To increase the ability to scale and at the same time be highly available, we move the logic from the database to separate servers. In this way, the database becomes more independent and focused on the actual process of storing data.
-
-In the NoSQL database world, ACID transactions are less common as some databases have loosened the requirements for immediate consistency, data freshness, and accuracy in order to gain other benefits, like scale and resilience.
-
-BASE properties are much looser than ACID guarantees, but there isn't a direct one-for-one mapping between the two consistency models. Let us understand these terms:
-
-### Basic Availability
-
-The database appears to work most of the time.
-
-### Soft-state
-
-Stores don't have to be write-consistent, nor do different replicas have to be mutually consistent all the time.
-
-### Eventual consistency
-
-The data might not be consistent immediately but eventually, it becomes consistent. Reads in the system are still possible even though they may not give the correct response due to inconsistency.
-
-## ACID vs BASE Trade-offs
-
-There's no right answer to whether our application needs an ACID or a BASE consistency model. Both the models have been designed to satisfy different requirements. While choosing a database we need to keep the properties of both the models and the requirements of our application in mind.
-
-Given BASE's loose consistency, developers need to be more knowledgeable and rigorous about consistent data if they choose a BASE store for their application. It's essential to be familiar with the BASE behavior of the chosen database and work within those constraints.
-
-On the other hand, planning around BASE limitations can sometimes be a major disadvantage when compared to the simplicity of ACID transactions. A fully ACID database is the perfect fit for use cases where data reliability and consistency are essential.
+**ACID vs BASE**
+There's no right answer to whether our application needs an ACID or a BASE consistency model. Both the models have been designed to satisfy different requirements. A fully ACID database is the perfect fit for use cases where data reliability and consistency are essential. BASE databases are more used in use cases where high availability is important and there is not need for immediate consistency.
 
 # CAP Theorem
 
