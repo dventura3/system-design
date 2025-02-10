@@ -858,12 +858,18 @@ If a system is reliable, it is available. However, if it is available, it is not
 ## High availability vs Fault Tolerance
 
 Both high availability and fault tolerance apply to methods for providing high uptime levels. However, they accomplish the objective differently.
+A fault-tolerant system has **no service interruption** but a significantly higher cost, while a highly available system has **minimal service interruption**.
 
-A fault-tolerant system has no service interruption but a significantly higher cost, while a highly available system has minimal service interruption. Fault-tolerance requires full hardware redundancy as if the main system fails, with no loss in uptime, another system should take over.
+**Fault-tolerance** requires **full hardware redundancy** as if the main system fails, with no loss in uptime, another system should take over (for example: when you set replicas of the redis instances, you provide fault tolerance).
+
+**High availability** guarantees an absolute degree of functional continuity within a time window expressed as the relationship between uptime and downtime.
+Uptime and availability don't mean the same thing. A system may be up for a complete measuring period, but may be unavailable due to network outages or downtime in related support systems. Downtime and unavailability are synonymous.
+
 
 # Scalability
 
 Scalability is the measure of how well a system responds to changes by adding or removing resources to meet demands.
+It's the property of a system or application to handle bigger amounts of work, or **to be easily expanded**, in response to increased demand for network, processing, database access or file system resources.
 
 ![scalability](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-I/scalability/scalability.png)
 
