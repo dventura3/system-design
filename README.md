@@ -1239,7 +1239,7 @@ Since all of the attributes for a given entity - like a customer - are stored ac
 
 By contrast, column-orientated databases typically offer better performance when we need to handle a subset of attributes from a large number of entities.
 
-
+![Colum-DB](./diagrams/colum-db.png)
 
 The Column model (the first image at the top) is the "building block" of Wide-Cloum DBs.
 The idea is that the "name" is the name of a "colum", and a "value" is the value of a colum.
@@ -1425,7 +1425,7 @@ In contrast, asynchronous replication copies the data to the replica after the d
 
 # Indexes
 
-Indexes are well known when it comes to databases, they are used to improve the speed of data retrieval operations on the data store. An index makes the trade-offs of increased storage overhead, and slower writes (since we not only have to write the data but also have to update the index) for the benefit of faster reads. Indexes are used to quickly locate data without having to examine every row in a database table. Indexes can be created using one or more columns of a database table, providing the basis for both rapid random lookups and efficient access to ordered records.
+Indexes are well known when it comes to databases, they are used to improve the speed of data retrieval operations on the data store. An index makes the trade-offs of **increased storage overhead, and slower writes** (since we not only have to write the data but also have to update the index) for the **benefit of faster reads**. Indexes are used to quickly locate data without having to examine every row in a database table. Indexes can be created using one or more columns of a database table, providing the basis for both rapid random lookups and efficient access to ordered records.
 
 ![indexes](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-II/indexes/indexes.png)
 
