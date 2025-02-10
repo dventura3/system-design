@@ -1179,7 +1179,12 @@ The graph relates the data items in the store to a collection of nodes and edges
 
 ### Time series
 
-A time-series database is a database optimized for time-stamped, or time series, data.
+A time-series database is a database optimized for time-stamped, or time series, data. In IoT or Analytics or DevOps applications, you have always the same pattern of data which is caputes every X millisecs. 
+Example 1: sending data from a temperature sensor to a DB every 10 millisecs. The data will follow always the same pattern and samples will not differenciate a lot in a short timeframe.
+Example 2: DevOps jobs collect and analyze operational metrics to monitor health and usage, and analyze data in real time to improve performance and availability.
+Example 3: store and process incoming and outgoing web traffic data for your applications, with additional aggregate functions for analysis and insights.
+
+This type of DB is used in applications with low-latency queries and large-scale data ingestion.
 
 **Advantages**
 
@@ -1200,20 +1205,89 @@ A time-series database is a database optimized for time-stamped, or time series,
 
 ### Wide column
 
-Wide column databases, also known as wide column stores, are schema-agnostic. Data is stored in column families, rather than in rows and columns.
+[Wide column databases](https://dandkim.com/wide-column-databases/), also known as wide column stores, are schema-agnostic.
+This is a type of NoSQL database that stores data in columns, rather than in rows and columns.
+
+
+So, in a row-orientated database, each entry is stored as a separate object, containing all of the relevant attributes. This might look like:
+
+```
+rowId1, firstName1, lastName1, phone1;
+
+rowId2, firstName2, lastName2, phone2;
+
+rowId3, firstName3, lastName3, phone3;
+```
+
+This is an efficient way of storing data that's going to be used for performing operations on a comparatively small number of rows - but if we want to perform operations on single attributes from a large number of rows, it's not optimal.
+We'd have to handle the entirety of every row to access the phone numbers unless we had some form of indexing in place.
+
+Column-orientated databases work differently. As you might have guessed, the data is stored in columns rather than rows.
+So, stored objects contain all of the values for a given column, like so:
+
+```
+rowId1, rowId2, rowId3;
+
+firstName1, firstName2, firstName3;
+
+lastName2, lastName2, lastName3;
+
+phone1, phone2, phone3;
+```
+
+Since all of the attributes for a given entity - like a customer - are stored across multiple objects whole-row operations are relatively inefficient.
+
+By contrast, column-orientated databases typically offer better performance when we need to handle a subset of attributes from a large number of entities.
+
+
+
+The Column model (the first image at the top) is the "building block" of Wide-Cloum DBs.
+The idea is that the "name" is the name of a "colum", and a "value" is the value of a colum.
+Data is stored in column cells (called "super colum"), which gets grouped into column families.
+A group of families is linked to a "row" key.
+
+For example for a Customer information, the wide-colum might look like this.
+
+| Row Key  |  Name  |  Value |
+|-----------|---------|---------------|
+| 100001   |   name   |    John Smith   |
+| 100001   |   address 1 |   10 Victory Lane |
+| 100001   |   address 2 |  Pittsburgh, PA  15120 |
+
+Each column family typically contains columns that are used together, so the columns are stored as a contiguous block on disk, enhancing performance.
+The wide-colum DBs provide MASSIVE scalability!
+
+Also, The power of the wide-colum DB comes with the more unusual attributes.
+**Any attribute can be captured** and stored in a wide-colum DB.
+There is a high flexibility in data schema and structure!
+In the example above, different customers, can have different attributes.
+Therefore we do not need to have the same "data schema" for all customers!
+
+| Row Key  |  Name  |  Value |
+|-----------|---------|---------------|
+| 100001   |   fav color    |    red   |
+| 100001   |   fav shirt |   sprots tshirts |
+| 1000033  |   fav music |  Sanremo |
+
+
+You could see that a wide-column store is like a **mix between a relational database and a document store**. It still uses rows and columns like that of a relational database. And the column formats can be different for each row in the same table. This combines the regimented tabular structure of the relational model and the flexible data schema of the document model.
+
 
 **Advantages**
 
 - Highly scalable, can handle petabytes of data
+- Consistent, performant performance on HEAVY **write** loads
 - Ideal for real-time big data applications
 
 **Disadvantages**
 
 - Expensive
-- Increased write time
+- Increased write time (inefficient updates)
+- Inefficient joins / aggregations
 
 **Use cases**
 
+- Any use case with big amouunt of data, and data is rarely updated. Also when there is no need for joins or aggregates.
 - Business analytics
 - Attribute-based data storage
 
