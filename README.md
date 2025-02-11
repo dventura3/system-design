@@ -23,6 +23,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Proxy](#proxy)
   - [Availability](#availability)
   - [Scalability](#scalability)
+  - [Fault Tolerance vs Resiliancy](#fault-tolerance-vs-resiliancy)
   - [Storage](#storage)
   - [Global vs Local Service](#global-vs-local-service)
 
@@ -907,6 +908,17 @@ Horizontal scaling (also known as scaling out) expands a system's scale by addin
 - Increased complexity
 - Data inconsistency
 - Increased load on downstream services
+
+# Fault Tolerance vs Resiliancy
+
+**Fault tolerance** is the capacity of a system to survive (i.e. tolerate) when a fault occurs, e.g, surviving a server crash or network partition etc. There may be some temporary drop in overall performance, however system features are not affected.
+For example: If out of N instances of a microservice sitting behind a reverse proxy like nginx, one instance fails, the service is still available. However, There will be a decrease in throughput . Hence the service is fault-tolerant.
+
+**Resiliency** is the ability of software systems to self-recover from failuresand problems. Circuit Breaker pattern often used in micro service architecture address resilience issue, wherein you give system time to recover.
+For example: If we run the above example on Kubernetes, the instance that failed will be automatically brought back online (maynot be the same instance) because Kubenetes automatically maintains the exact number of pods in a replica set. Hence in addition to being fault tolerance this it is also resilient.
+
+These qualities are crucial for maintaining service reliability and user trust. Designing such systems involves the ability to self-detect faults and apply redundancy, failovers (i.e. when a replica take on the work to replace a broken server), and robust error handling.
+
 
 # Storage
 
