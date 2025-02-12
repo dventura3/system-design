@@ -44,6 +44,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Sharding](#sharding)
   - [Consistent Hashing](#consistent-hashing)
   - [Database Federation](#database-federation)
+  - [How to Choose the Right Database?](#how-to-choose-the-right-database)
 
 - **Chapter III**
 
@@ -80,7 +81,11 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [WhatsApp](#whatsapp)
   - [Twitter](#twitter)
   - [Netflix](#netflix)
-  - [Uber](#uber)
+  - [Uber](#uber) 
+  - [Shopping carts]()
+  - [DevOps Logs or IoT]()
+  - [Instana]()
+  - [Sport Streaming Applications]()
 
 - **Appendix**
 
@@ -1653,17 +1658,19 @@ Let's take a detailed look at the three distributed system characteristics to wh
 
 Consistency means that all clients see the same data at the same time, no matter which node they connect to. For this to happen, whenever data is written to one node, it must be instantly forwarded or replicated across all the nodes in the system before the write is deemed "successful".
 
+For example, different clients connect to different nodes, and the data must be replicated or forwarded to other nodes in the system. A practical example of it is, for instance, a social media platform like Facebook, which shows total friends in a user’s own profile, and in other connection’s profiles, it shows some mutual connections. So when an account is added or deleted from a mutual connection’s database in a database stored in India, it takes some time to reflect in a database replica stored in the United States.
+
 ### Availability
 
 Availability means that any client making a request for data gets a response, even if one or more nodes are down.
 
 ### Partition tolerance
 
-Partition tolerance means the system continues to work despite message loss or partial failure. A system that is partition-tolerant can sustain any amount of network failure that doesn't result in a failure of the entire network. Data is sufficiently replicated across combinations of nodes and networks to keep the system up through intermittent outages.
+Partition tolerance (also said "partitioning") means the system continues to work despite message loss or partial failure. A system that is partition-tolerant can sustain any amount of network failure that doesn't result in a failure of the entire network. Data is sufficiently replicated across combinations of nodes and networks to keep the system up through intermittent outages.
 
-## Consistency-Availability Tradeoff
+## Consistency-Availability-Partitioning Tradeoff
 
-We live in a physical world and can't guarantee the stability of a network, so distributed databases must choose Partition Tolerance (P). This implies a tradeoff between Consistency (C) and Availability (A).
+We live in a physical world and can't guarantee the stability of a network, so distributed databases must choose a tradeoff between Partition Tolerance (P), Consistency (C) and Availability (A).
 
 ### CA database
 
@@ -2093,6 +2100,106 @@ Below are some disadvantages of federated databases:
 - Joining data from two databases is complex.
 - Dependence on autonomous data sources.
 - Query performance and scalability.
+
+# How to Choose the Right Database?
+
+What to do when you are designing a system and you need to choose the Database solution.
+
+## Number 1: Choose Data Modeling - Structured or Unstructured Data?
+Another important element to consider while selecting the correct database is data modeling.
+Determine whether your application requires **structured or unstructured data**. For example, suppose you’re creating a social media platform like Facebook. The users will have organized information such as their name, birth date, gender, and so on. However, this is not the case if your application offers environmental or geospatial data with no set structure. No-SQL databases can be used in such applications. This is also true in some cases with social networking platforms like Facebook, LinkedIn, and Instagram, where users post on the news feed. As this type of data is unstructured, it must be kept in No-SQL databases.
+
+NoSQL or Document databases are more versatile because they don’t require tables to store data in a specific format. Unlike SQL tables, which require predefined schemas, each document stored may contain various fields. Embedded documents are used by several document repositories to handle complicated data structures.
+
+The core of any database choice includes the characteristics of the data that you need to store, retrieve, analyze, and work with. This includes:
+- Your data model. For example, is it relational, structured, semi-structured, time series, vector, or using a highly connected dataset?
+- Data access. How do you need to access your data?
+- The extent to which you need real-time data.
+
+Some Advices to choose the DBs based on the format of your data:
+- If you are going to fetch data by key, then all you need is a key-value store (e.g. DynamoDB, Redis).
+- if you will require to query by many different fields you can choose either Relational DB (e.g.MySQL, PostgreSQL) or Document DB (e.g.MongoDB, CouchDB, MySQL, PostgreSQ). Note that Document DBs don’t support well queries that require joining data from multiple documents.
+- In case you are looking for fuzzy search query capabilities (free text search), then search engines like Elasticsearch and Solr are the best fit => Consider the Google maps search engine or ride-sharing apps such as Uber. These applications’ databases allow `fuzzy search`. When an Uber user  types “Arpot” instead of “Airport,”, the app still returns nearby airport locations.
+- If you mainly store a big amount of data a Wide-Column DBs (e.g. Cassandra) may be right for you.
+
+
+## Number 2: Choose CAP Model
+First of all you need to apply the **CAP Model**. You can NOT have all the three characteristcs.
+- Choose **Consistency and Availability** for non-distributed systems. The use case sacrifices Partition tolerance and it is mostly used by primarily traditional databases.
+- **Availability and Partition tolerance** is used for truly distributed systems. This use case sacrifices Consistency of data between nodes and prefers Availability over immediate Consistency, used by distributed NoSQL data stores.
+- **Consistency and Partition tolerance** are chosen for distributed systems where the users need a consistent view of data more than the availability of systems.
+
+Partitioning is inevitable for scale distributed systems and allow the use of sharding. So, most of the cases, you will always choose Partitioning + one of the other two models (Avalability or Consistency).
+Also consider that sharding can be implemented only with NoSQL DBs, because SQL DBs use other techniques for scalability, such as normalization (i.e. splitting data in separated tables) or vertical scalability which might increase costs.
+
+When thinking about availability, pay attention to a number of key factors, including capabilities for backup and restore, replication, failover, and point-in-time recovery (PITR).
+
+Is strong consistency required (read after write, especially when you switch writes to a different data-center) or eventual consistency is OK?
+In case you need to read your data right after your write it (i.e. strong consistency) then a Relational database (e.g. MySQL, PostgreSQL) is usually more suited than a Document Database (e.g.MongoDB, CouchDB).
+
+
+## Number 3: Choose Scalability Approach
+The second question you need to answer is: "What kind of scalability do you need, and do you require a scalable database?"
+Let’s say you need a database system that can handle tens of thousands of users on a global scale. In that case, you must decide whether to scale your database horizontally or vertically. If you want to expand the capacity of a single system and require more memory, you can do so by adding a more powerful CPU core or more RAM to an existing server, which is known as vertical scaling. However, if you want to increase capacity over time, you can add more machines, known as horizontal scaling.
+It’s critical to know if you need a scalable database or not; because scaling isn’t about estimating demand and meeting it. Instead, it’s about being ready to handle that sudden surge in data.
+You must select databases with **both computation (both high CPU and memory utilization) and storage (i.e. disk usage consumption) scaling capabilities**.
+
+When choosing Horizontal vs Vertical scaling, you need to think about **CONCURRENCY**. Indeed, horizontal scaling distributes multiple jobs across multiple machines over the network, at a go. This reduces the workload on each machine, but also this requires modifying a sequential piece of logic in order to run workloads concurrently on multiple machines.
+On the other side, vertical scaling relies on multi-threading on the existing machine to handle multiple requests at the same time. The concurrency is easier to handle because it consists in handling threads on the same machine.
+
+Use vertical scaling when:
+- You’ve verified with your engineers and other stakeholders that increasing a machines capabilities, such CPUs and memory capacity, will deliver the price-performance level your workloads require
+- If you’re just starting out; you don’t know how consistent the traffic is or how many users you’ll get
+- You have a legacy app that doesn’t require distributed or high scalability
+- You can't use horizontal scaling becasue - maybe - the code doesn't currently support concurrency on multiple nodes/machines.
+- Not a lot of machine/nodes upgrades/updates are needed
+
+Use horizontal scaling when:
+- Providing high-quality service requires high performance
+- Backup machines are necessary to reduce single points of failure
+- You need to run your application or services across different geographical locations at low latency
+- Updating, upgrading, and optimizing your system regularly is imperative — all without increasing downtime
+- You are sure that your usage, users, or traffic are consistently high or will be growing exponentially soon
+- You are using a micro-services architecture or containerized applications, which achieve better performance on a distributed system
+
+
+## Number 4: Performance - What is the needed throughput and latency?
+All databases performance degrades as the amount of read/write throughput traffic increases.
+
+Will you have more more reads or writes?
+
+In case you have very high traffic and require very low latency, Cloud providers solutions like Amazon’s DynamoDB and Google’s Bigtable could be just what you need. 
+Also DynamoDB was purpose-built to improve upon the performance and scalability of relational databases to deliver **single-digit millisecond** performance at any scale...so for example in DynamoDB **JOIN operations are not implemented**/allowed. DynamoDB is a NoSQL Key-Value DB... you put all your data in the "Value" and identify the data by a "Key". You do not have to implement JOINs of data... and this allow to have better performance.
+As long as your service is deployed on the same data center as the database, you can enjoy latencies that are under 10ms.
+The downside is of-course the $ cost.
+
+If your workload requires extremely high read performance with a response time measured in **microseconds** (rather than single-digit milliseconds), you might want to consider using in-memory caching solutions such as Amazon ElastiCache alongside your database, or a fully durable, persistent in-memory database such as Amazon MemoryDB.
+
+
+## Number 5: Considered the costs 
+No matter how fancy your database is or what new technology it supports, the price is the most important factor in closing the deal. So it’s crucial to assess the degree of flexibility your database solution offers compared to the costs paid. 
+
+Similarly, sharding or splitting data comes at a cost. 
+Some databases, such as Amazon Aurora, allow you to scale numerous instances, but you can only scale read-only nodes, limiting your ability to scale write nodes. Databases like MySQL and Postgres need you to partition/normalize the database, which leads to high costs. Modification of applications, hardware configuration or addition, establishing new instances, and other ways can all contribute to the database’s cost.
+
+
+## Summary
+
+SQL DBs:
+- Good: with well structured data
+- GOOD: with strict-consistency data
+- NOT Good: with "Big Data" since you can only scale vertically or you need to do normalization => not the best option for high scalability
+- NOT Good: different types of SQL DBs have different write/read performance (so we can't generalise). However, the fact that SQL DBs usually use "JOINs" might slow down the write/read performance.
+- Resiliance, Fault-tolerance, High-Availability depends on the type of SQL DB choosen.
+
+
+NoSQL DBs:
+- Good: with not structured data
+- Good: high level of scalability
+- NOT Good: with strict-consistency data => They usually provide "loose consistency"
+- Depends on what NoSQL DB you choose you might have better or slower performance. However, usually the data are all in the same DOC (so no need to use joins), which gives better performance. Also you can use in-memory DBs (instead of disk-based DBs) to further enhance your performace.
+- Resiliance, Fault-tolerance, High-Availability depends on the type of NoSQL DB choosen.
+
 
 # N-tier architecture
 
@@ -3618,6 +3725,8 @@ Nowadays, mTLS is commonly used by microservices or distributed systems in a [ze
 System design is a very extensive topic and system design interviews are designed to evaluate your capability to produce technical solutions to abstract problems, as such, they're not designed for a specific answer. The unique aspect of system design interviews is the two-way nature between the candidate and the interviewer.
 
 Expectations are quite different at different engineering levels as well. This is because someone with a lot of practical experience will approach it quite differently from someone who's new in the industry. As a result, it's hard to come up with a single strategy that will help us stay organized during the interview.
+
+Many real examples of architectures using AWS services in [thisIsMyArchitecture](https://www.youtube.com/hashtag/thisismyarchitecture).
 
 Let's look at some common strategies for system design interviews:
 
@@ -5746,6 +5855,12 @@ To make our system more resilient we can do the following:
 - Using multiple read replicas for our databases.
 - Multiple instances and replicas for our distributed cache.
 - Exactly once delivery and message ordering is challenging in a distributed system, we can use a dedicated [message broker](https://karanpratapsingh.com/courses/system-design/message-brokers) such as [Apache Kafka](https://kafka.apache.org) or [NATS](https://nats.io) to make our notification system more robust.
+
+# Sport Streaming Applications
+
+Streaming applications – Media and entertainment companies use DynamoDB as a metadata index for content, content management service, or to serve near real-time sports statistics. They also use DynamoDB to run user watchlist and bookmarking services and process billions of daily customer events for generating recommendations. These customers benefit from DynamoDB's scalability, performance, and resiliency. DynamoDB scales to workload changes as they ramp up or down, enabling streaming media use cases that can support any levels of demand.
+
+
 
 # Next Steps
 
