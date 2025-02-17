@@ -2303,6 +2303,9 @@ The queue will attempt to distribute the messages evenly across all the consumer
 
 > Differences
 
+The differences below are "generalized", but each implementation of the message broker/even streaming patters has each own features.
+So, it might be that some of the feature below are or not are implemented. Depends on the specific tool adopted.
+
 | Property | Message Broker | Event Streaming |
 | ------------------------------- | -------------------------------------- | -------------------------------------- |
 | Type of messaging patterns | Message brokers can support both the two messaging patterns (i.e. message queues and pub/sub). | Event streaming platforms only offer pub/sub-style distribution patterns. |
@@ -2319,12 +2322,21 @@ The queue will attempt to distribute the messages evenly across all the consumer
 - Exactly once delivery, and to participate into two phase commit transaction
 - Asynchronous request / reply communication: the semantic of the communication is for one component to ask a second command to do something on its data. This is a command pattern with delay on the response.
 - Recall messages in queue are kept until consumer(s) got them.
+- Consumer has not visibility of the nuber of producer and vice versa.
+- Failure handling is done largely by the message broker. The way RabbitMQ handles message processing errors is by keeping track of failures in processing a message. After a message is considered a poison pill, it is routed to a DLQ exchange. This allows for either requeueing of messages or routing to a dedicated DLQ for examination. In this manner, RabbitMQ provides a guarantee that a message which was not processed successfully will not get lost.
+- Message **processing ordering** is mostly not guaranteed by the queue. It is not possible to ensure that messages get handled in order in cases when you have multiple consumers. If you want to process the messages in order:
+    - Have only 1 consumer instance at all times, or a main consumer and several stand-by consumers.
+    - Or don't use a messaging queue and do the processing in a synchronous blocking method, which might sound bad but in many cases and business requirements it is completely valid and sometimes even mission critical.
+
 
 **Kafka** - Event Straming:
 - Publish events as immutable facts of what happened in an application
 - Get continuous visibility of the data Streams
 - Keep data once consumed, for future consumers, for replay-ability
 - Scale horizontally the message consumption
+- A topic is divided in partition. Each consumer is assigned the responsibility of consuming from one or more partitions. This means that the producer, who is usually in charge of managing the topic, is implicitly aware of the max number of consumer instances that can subscribe to the topic.
+- The message order is guaranteed at partition level
+- The consumer is responsible for handling both success and failure scenarios when processing messages. In case a message was processed a few times unsuccessfully (poison pill), the consumer application will need to keep track of the amount of processing attempts and then produce a message to a separate DLQ (dead letter queue) topic, where it can be examined/re-run later on. => This means that in case you would like to have either retry/DLQ capabilities, it is up to you to provide a retry mechanism and also act as a producer when sending a message to a DLQ topic, which in some edge cases, might lead to message loss.
 
 
 ## Message brokers vs Enterprise Service Bus (ESB)
@@ -2338,7 +2350,7 @@ Whereas message brokers are a _"lightweight"_ alternative to ESBs that provide s
 Here are some commonly used message brokers:
 
 - [NATS](https://nats.io)
-- [Apache Kafka](https://kafka.apache.org)
+- [Apache Kafka](https://kafka.apache.org) => this is a mix of message broker and event streaming... it has functionalities of both them.
 - [RabbitMQ](https://www.rabbitmq.com)
 - [ActiveMQ](https://activemq.apache.org)
 
