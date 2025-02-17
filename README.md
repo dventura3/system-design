@@ -2256,26 +2256,76 @@ Below are some disadvantages of N-tier architecture:
 
 # Message Brokers
 
-A message broker is a software that enables applications, systems, and services to communicate with each other and exchange information. The message broker does this by translating messages between formal messaging protocols. This allows interdependent services to _"talk"_ with one another directly, even if they were written in different languages or implemented on different platforms.
+A message broker is a software that enables applications, systems, and services to communicate with each other and exchange information.
+Message brokers can validate, store, route, and deliver messages to the appropriate destinations. They serve as intermediaries between other applications, allowing senders to issue messages without knowing where the receivers are, whether or not they are active, or how many of them there are. This facilitates the decoupling of processes and services within systems. The message broker does this by translating messages between different messaging protocols. This allows interdependent services to _"talk"_ with one another directly, even if they were written in different languages or implemented on different platforms.
+
+In short, they provide:
+- data routing
+- message translation
+- message persistence
+- client state management functionalities.
 
 ![message-broker](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-III/message-brokers/message-broker.png)
 
-Message brokers can validate, store, route, and deliver messages to the appropriate destinations. They serve as intermediaries between other applications, allowing senders to issue messages without knowing where the receivers are, whether or not they are active, or how many of them there are. This facilitates the decoupling of processes and services within systems.
 
 ## Models
 
 Message brokers offer two basic message distribution patterns or messaging styles:
 
-- **[Point-to-Point messaging](https://karanpratapsingh.com/courses/system-design/message-queues)**: This is the distribution pattern utilized in message queues with a one-to-one relationship between the message's sender and receiver.
-- **[Publish-Subscribe messaging](https://karanpratapsingh.com/courses/system-design/publish-subscribe)**: In this message distribution pattern, often referred to as _"pub/sub"_, the producer of each message publishes it to a topic, and multiple message consumers subscribe to topics from which they want to receive messages.
+- **[Point-to-Point messaging](https://karanpratapsingh.com/courses/system-design/message-queues)**: This is the message distribution pattern utilized in message queues with a one-to-one relationship between the message's sender and receiver (_more details below_).
+- **[Publish-Subscribe messaging](https://karanpratapsingh.com/courses/system-design/publish-subscribe)**: In this message distribution pattern, often referred to as _"pub/sub"_, the producer of each message publishes it to a topic, and multiple message consumers subscribe to topics from which they want to receive messages (_more details below_).
 
-_We will discuss these messaging patterns in detail in the later tutorials._
 
 ## Message brokers vs Event streaming
 
-Message brokers can support two or more messaging patterns, including message queues and pub/sub, while event streaming platforms only offer pub/sub-style distribution patterns. Designed for use with high volumes of messages, event streaming platforms are readily scalable. They're capable of ordering streams of records into categories called _topics_ and storing them for a predetermined amount of time. Unlike message brokers, however, event streaming platforms cannot guarantee message delivery or track which consumers have received the messages.
+> Event Streaming
 
-Event streaming platforms offer more scalability than message brokers but fewer features that ensure fault tolerance like message resending, as well as more limited message routing and queueing capabilities.
+Stores a sequence of events. Events are usually appended to a "log file" (also called queue or topic) in the order in which they arrived at the event stream.
+Events in the topic or queue are immutable and their order cannot be changed.
+One or more consumers can subscribe to a log file or topic to receive all messages that come through that stream. 
+
+Events can potentially be stored for days or weeks, as once they are successfully consumed, they are not deleted from the queue/topic.
+The events are deleted only when they "expired" (so it depends on the settings of the queue/topic).
+
+As events are published to the queue or topic, the broker identifies subscribers to the topic or queue, and makes the events available to the subscribers. New subscribers can access the logs file and read messages from any point in time (considering that the events are stored in the topic/queue until their expiration time).
+
+
+> Message Broker 
+
+Used for services or components to communicate with each other. It provides the exchange of information between applications by transmitting messages received from the producer to the consumer in an async manner.
+
+It usually supports the concept of queue, where messages are typically stored untill they are consumed. The purpose of the messages in the queue is to be consumed as soon as one of the consumers is available for processing, and dropped/deleted after the successful consumption of said message.
+
+When all consumers are busy, the queue (or "broker") will store messages, making it a durable queue (until the message is consumed!). So, to ensure the broker doesn’t drop messages that haven’t been delivered yet, the queue needs to persist. 
+
+The queue will attempt to distribute the messages evenly across all the consumers, with the guarantee being that every message will only be delivered once.
+
+
+> Differences
+
+| Property | Message Broker | Event Streaming |
+| ------------------------------- | -------------------------------------- | -------------------------------------- |
+| Type of messaging patterns | Message brokers can support both the two messaging patterns (i.e. message queues and pub/sub). | Event streaming platforms only offer pub/sub-style distribution patterns. |
+| Message delivery | While many consumers may be active, queues only deliver messages to a single consumer (typically whichever consumer is available to receive it first) before removing that message from the queue. | Streaming brokers send the same message to every subscriber of that log file. | 
+| Message/Event Duration | Once a message is delivered, it’s gone forever | Consumers can move backward and forward within the file log (topic/queue) to re-process messages they’ve already received on command. The event persists in the queue/topic until it "expires" |
+| Scalability | Not great | Designed for use with high volumes of messages. Highly scalable |
+| Fault Tolerance | Guarantee message delivery only one time. Often provide features such as message resending to guarantee the message is delivered and/or processed only once | Fewer features that ensure fault tolerance. Usually they guaranee eventual consistency (not full consistency), and not always they guarantee message delivery and/or processing (depends on the service adopted) |
+| Typical Use of Message/Events | In traditional message processing, you apply simple computations on the messages — in most cases individually per message. | In stream processing, you apply complex operations on multiple input streams and multiple records (ie, messages) at the same time (like aggregations and joins).|
+
+
+> RabbitMQ vs Kafka
+
+**RabbitMQ** - Message Broker:
+- Exactly once delivery, and to participate into two phase commit transaction
+- Asynchronous request / reply communication: the semantic of the communication is for one component to ask a second command to do something on its data. This is a command pattern with delay on the response.
+- Recall messages in queue are kept until consumer(s) got them.
+
+**Kafka** - Event Straming:
+- Publish events as immutable facts of what happened in an application
+- Get continuous visibility of the data Streams
+- Keep data once consumed, for future consumers, for replay-ability
+- Scale horizontally the message consumption
+
 
 ## Message brokers vs Enterprise Service Bus (ESB)
 
@@ -2292,7 +2342,7 @@ Here are some commonly used message brokers:
 - [RabbitMQ](https://www.rabbitmq.com)
 - [ActiveMQ](https://activemq.apache.org)
 
-# Message Queues
+# Messaging Model: Message Queues (Aka Point-to-Point)
 
 A message queue is a form of service-to-service communication that facilitates asynchronous communication. It asynchronously receives messages from producers and sends them to consumers.
 
@@ -2373,7 +2423,7 @@ Following are some widely used message queues:
 - [ActiveMQ](https://activemq.apache.org)
 - [ZeroMQ](https://zeromq.org)
 
-# Publish-Subscribe
+# Messaging Model: Publish-Subscribe
 
 Similar to a message queue, publish-subscribe is also a form of service-to-service communication that facilitates asynchronous communication. In a pub/sub model, any message published to a topic is pushed immediately to all the subscribers of the topic.
 
