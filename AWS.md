@@ -19,3 +19,11 @@ A summary (not including ALL the latest DBs services fromvided by AWS) below:
 
 
 See https://medium.com/@christopheradamson253/deep-dive-into-aws-dynamodb-a-nosql-database-for-high-performance-applications-4c80d1410533
+
+
+DynamoDB scales by increasing the number of partitions. Each item is stored on a partition. Each partition can handle:
+- up to 3000 Read Capacity Units
+- up to 1000 Write Capacity Units
+- up to 10 GB of data
+As soon as any of these limits is reached, the partition is split into two and the items are redistributed. 
+This happens until there is sufficient capacity available to meet demand. You don't control how that happens, it's a managed service that does this in the background. The number of partitions only ever grows.
