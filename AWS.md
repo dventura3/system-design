@@ -27,3 +27,7 @@ DynamoDB scales by increasing the number of partitions. Each item is stored on a
 - up to 10 GB of data
 As soon as any of these limits is reached, the partition is split into two and the items are redistributed. 
 This happens until there is sufficient capacity available to meet demand. You don't control how that happens, it's a managed service that does this in the background. The number of partitions only ever grows.
+
+
+# Compare Event-Driven Architecture Solutions on AWS
+

@@ -50,13 +50,13 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
 
   - [N-tier architecture](#n-tier-architecture)
   - [Message Brokers](#message-brokers)
-  - [Message Queues](#message-queues)
-  - [Publish-Subscribe](#publish-subscribe)
+  - [Messaging Pattern: Message Queues](#messaging-pattern-message-queues-aka-point-to-point)
+  - [Messaging Pattern: Publish-Subscribe](#messaging-pattern-publish-subscribe)
   - [Enterprise Service Bus (ESB)](#enterprise-service-bus-esb)
   - [Monoliths and Microservices](#monoliths-and-microservices)
   - [Event-Driven Architecture (EDA)](#event-driven-architecture-eda)
-  - [Event Sourcing](#event-sourcing)
-  - [Command and Query Responsibility Segregation (CQRS)](#command-and-query-responsibility-segregation-cqrs)
+  - [Messaging Pattern: Event Sourcing](#event-sourcing)
+  - [CMessaging Pattern: ommand and Query Responsibility Segregation (CQRS)](#command-and-query-responsibility-segregation-cqrs)
   - [API Gateway](#api-gateway)
   - [REST, GraphQL, gRPC](#rest-graphql-grpc)
   - [Long polling, WebSockets, Server-Sent Events (SSE)](#long-polling-websockets-server-sent-events-sse)
@@ -2354,9 +2354,11 @@ Here are some commonly used message brokers:
 - [RabbitMQ](https://www.rabbitmq.com)
 - [ActiveMQ](https://activemq.apache.org)
 
-# Messaging Model: Message Queues (Aka Point-to-Point)
+# Messaging Pattern: Message Queues (Aka Point-to-Point)
 
-A message queue is a form of service-to-service communication that facilitates asynchronous communication. It asynchronously receives messages from producers and sends them to consumers.
+A message queue is a form of service-to-service communication that facilitates asynchronous communication. It asynchronously receives messages from producers and sends them to consumers. Messages transport a payload and messages are persisted until consumed.
+
+Queues **provide a buffer for messages** in case the consumer is unavailable or needs to control the number of messages processed at a given time.
 
 Queues are used to effectively manage requests in large-scale distributed systems. In small systems with minimal processing loads and small databases, writes can be predictably fast. However, in more complex and large systems writes can take an almost non-deterministic amount of time.
 
@@ -2435,7 +2437,7 @@ Following are some widely used message queues:
 - [ActiveMQ](https://activemq.apache.org)
 - [ZeroMQ](https://zeromq.org)
 
-# Messaging Model: Publish-Subscribe
+# Messaging Pattern: Publish-Subscribe
 
 Similar to a message queue, publish-subscribe is also a form of service-to-service communication that facilitates asynchronous communication. In a pub/sub model, any message published to a topic is pushed immediately to all the subscribers of the topic.
 
@@ -2675,32 +2677,46 @@ That's why it's essential to understand in-depth if your business _actually_ nee
 
 # Event-Driven Architecture (EDA)
 
-Event-Driven Architecture (EDA) is about using events as a way to communicate within a system. Generally, leveraging a message broker to publish and consume events asynchronously. The publisher is unaware of who is consuming an event and the consumers are unaware of each other. Event-Driven Architecture is simply a way of achieving loose coupling between services within a system.
+In **synchronous API communication** between microservices there are some limitations:
+- **Coupling** is the measure of dependency each component of an application has on one another. There are various forms of coupling that systems may share:
+  - Data format dependency (binary, XML, JSON)
+  - Temporal dependency (the order in which components need to be called)
+  - Technical dependency. When components are more tightly coupled, it becomes increasingly likely that a change or operational issue in one component will propagate to others.
+- **Multiple points of failures**. Tightly coupled components can also affect an application’s scalability and availability. If two components depend on one another’s synchronous responses, a failure in one will cause the other to fail. These failures can reduce the application’s overall fault tolerance. A failure in one of the service, will impact the other services.
+- **Varying degree of quality of service**
+
+![image](./diagrams/synchronous-API-challenges-over-time.png)
+
+The synchronous API communication can be replaced by the use of asynchronous communication throught the use of Event-Driven Architecture.
+Event-Driven Architecture (EDA) is about using events as a way to communicate within a system. Generally, leveraging a message broker to publish and consume events asynchronously. The publisher is unaware of who is consuming an event and the consumers are unaware of each other. Event-Driven Architecture is simply a way of achieving **loose coupling** between services within a system.
+Event-driven architectures achieve loose coupling through asynchronous communication via events. This happens when one component doesn’t need another to respond. Instead, the first component may send an event and continue without impact should the second component delay or fail.
+
+Event-driven architectures have three key components:
+- **Event producers**: Publishes an event to the router.
+- **Event consumers**: Uses events to reflect changes in the system.
+- **Event brokers**: mediate between producers and consumers, publishing and consuming shared events while mitigating the two sides. There are two types of event brokers that can both be used in EDA architeture or you can decide to use only one of them.
+  - **Event routers**: Filters and pushes the events to consumers. Event routers **push** events to targets.
+  - **Event stores**: Buffer messages until services are available to process. Consumers **pull** events from events stores.
+
+![image](./diagrams/event-drive-architecture.png)
 
 ## What is an event?
 
-An event is a data point that represents state changes in a system. It doesn't specify what should happen and how the change should modify the system, it only notifies the system of a particular state change. When a user makes an action, they trigger an event.
+An event is a data point that represents **state changes** in a system. It doesn't specify what should happen and how the change should modify the system, it only **notifies the system of a particular state change**. When a user makes an action, they trigger an event.
 
-## Components
-
-Event-driven architectures have three key components:
-
-- **Event producers**: Publishes an event to the router.
-- **Event routers**: Filters and pushes the events to consumers.
-- **Event consumers**: Uses events to reflect changes in the system.
-
-![event-driven-architecture](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-III/event-driven-architecture/event-driven-architecture.png)
-
-_Note: Dots in the diagram represents different events in the system._
+When communicating with events, components only need to be aware of the independent events. They don’t require knowledge of the transmitting component or any other components’ behavior (e.g., error handling, retry logic). So long as the event format remains the same, changes in any single component won’t impact the others. T
 
 ## Patterns
 
 There are several ways to implement the event-driven architecture, and which method we use depends on the use case but here are some common examples:
 
+- [Point-to-Point](#messaging-pattern-message-queues-aka-point-to-point)
+- [Publish-Subscribe](#messaging-pattern-publish-subscribe)
+- [Event Bus](#messaging-pattern-event-bus)
+- [Event Streaming](#messaging-pattern-event-streaming)
+- [Event Sourcing](#messaging-pattern-event-sourcing)
+- [Command and Query Responsibility Segregation (CQRS)](#messaging-pattern-command-and-query-responsibility-segregation-cqrs)
 - [Sagas](https://karanpratapsingh.com/courses/system-design/distributed-transactions#sagas)
-- [Publish-Subscribe](https://karanpratapsingh.com/courses/system-design/publish-subscribe)
-- [Event Sourcing](https://karanpratapsingh.com/courses/system-design/event-sourcing)
-- [Command and Query Responsibility Segregation (CQRS)](https://karanpratapsingh.com/courses/system-design/command-and-query-responsibility-segregation)
 
 _Note: Each of these methods is discussed separately._
 
@@ -2741,19 +2757,39 @@ Here are some widely used technologies for implementing event-driven architectur
 - [Amazon SNS](https://aws.amazon.com/sns)
 - [Google PubSub](https://cloud.google.com/pubsub)
 
-# Event Sourcing
+# Messaging Pattern: Event Bus
+A type of event router is an event bus, which provides complex routing logic. While topics in a "standard" pub-sub approach push the messages to all the subscribers, event buses can filter the incoming flow of messages and push them to different consumers based on event attributes.
+Event bus is a kind of "ochestrator" of events.
+
+In AWS: You can use Amazon Simple Notification Service (Amazon SNS) to create topics and Amazon EventBridge to create event buses.
+
+![image](./diagrams/event-bus.png)
+
+# Messaging Pattern: Event Streaming
+
+The use of streams, or continuous flows of events or data, is another method of abstracting producers and consumers. In contrast to event routers, streams typically **require consumers to poll for new events**. **Consumers maintain their unique filtering logic** to determine which events they want to consume while tracking their position in the stream.
+
+Event streams are **continuous flows of events**, which may be processed individually or together over a period of time.
+For example: A rideshare application (Uber, MyTaxi), which streams a customer’s changing locations as events, is an example of event streaming. Each “LocationUpdated” event exists as a meaningful data point used to visually update the customer’s location on a map.
+
+In AWS: Amazon Kinesis Data Streams and Amazon Managed Streaming for Apache Kafka (Amazon MSK) can be used for event- and data-streaming use cases. 
+
+![image](./diagrams/event-streaming.png)
+
+# Messaging Pattern: Event Sourcing
 
 Instead of storing just the current state of the data in a domain, use an append-only store to record the full series of actions taken on that data. The store acts as the system of record and can be used to materialize the domain objects.
 
+This can simplify tasks in complex domains, by avoiding the need to synchronize the data model and the business domain, while improving performance, scalability, and responsiveness. It can also provide consistency for transactional data, and maintain full audit trails and history that can enable compensating actions.
+
 ![event-sourcing](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-III/event-sourcing/event-sourcing.png)
 
-This can simplify tasks in complex domains, by avoiding the need to synchronize the data model and the business domain, while improving performance, scalability, and responsiveness. It can also provide consistency for transactional data, and maintain full audit trails and history that can enable compensating actions.
 
 ## Event sourcing vs Event-Driven Architecture (EDA)
 
-Event sourcing is seemingly constantly being confused with [Event-driven Architecture (EDA)](https://karanpratapsingh.com/courses/system-design/event-driven-architecture). Event-driven architecture is about using events to communicate between service boundaries. Generally, leveraging a message broker to publish and consume events asynchronously within other boundaries.
+Event sourcing is seemingly constantly being confused with [Event-driven Architecture (EDA)](https://karanpratapsingh.com/courses/system-design/event-driven-architecture). **Event-driven architecture** is about using **events to communicate between service boundaries**. Generally, leveraging a message broker to publish and consume events asynchronously within other boundaries.
 
-Whereas, event sourcing is about using events as a state, which is a different approach to storing data. Rather than storing the current state, we're instead going to be storing events. Also, event sourcing is one of the several patterns to implement an event-driven architecture.
+Whereas, **event sourcing** is about **using events as a state**, which is a different approach to storing data. Rather than storing the current state, we're instead going to be storing events. Also, event sourcing is one of the several patterns to implement an event-driven architecture.
 
 ## Advantages
 
@@ -2772,7 +2808,7 @@ Following are the disadvantages of event sourcing:
 - Requires a reliable way to control message formats, such as a schema registry.
 - Different events will contain different payloads.
 
-# Command and Query Responsibility Segregation (CQRS)
+# Messaging Pattern: Command and Query Responsibility Segregation (CQRS)
 
 Command Query Responsibility Segregation (CQRS) is an architectural pattern that divides a system's actions into commands and queries. It was first described by [Greg Young](https://twitter.com/gregyoung).
 
