@@ -2714,6 +2714,7 @@ There are several ways to implement the event-driven architecture, and which met
 - [Publish-Subscribe](#messaging-pattern-publish-subscribe)
 - [Event Bus](#messaging-pattern-event-bus)
 - [Event Streaming](#messaging-pattern-event-streaming)
+- [Choreography and orchestration]()
 - [Event Sourcing](#messaging-pattern-event-sourcing)
 - [Command and Query Responsibility Segregation (CQRS)](#messaging-pattern-command-and-query-responsibility-segregation-cqrs)
 - [Sagas](https://karanpratapsingh.com/courses/system-design/distributed-transactions#sagas)
@@ -2775,6 +2776,15 @@ For example: A rideshare application (Uber, MyTaxi), which streams a customer’
 In AWS: Amazon Kinesis Data Streams and Amazon Managed Streaming for Apache Kafka (Amazon MSK) can be used for event- and data-streaming use cases. 
 
 ![image](./diagrams/event-streaming.png)
+
+# Messaging Pattern: Choreography and Orchestration
+
+Choreography and orchestration are two different models for how distributed services can communicate with one another. Many applications will use both choreography and orchestration for different use cases.
+- In **orchestration**, communication is more tightly controlled. A central service coordinates the interaction and order in which services are invoked.
+- **Choreography** achieves communication without tight control. Events flow between services without any centralized coordination.
+
+![image](./diagrams/choreography-orchestration.png)
+
 
 # Messaging Pattern: Event Sourcing
 

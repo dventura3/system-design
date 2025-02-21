@@ -31,3 +31,8 @@ This happens until there is sufficient capacity available to meet demand. You do
 
 # Compare Event-Driven Architecture Solutions on AWS
 
+Resources about generic concepts for Event-Driven Architectures:
+https://d1.awsstatic.com/SMB/building-event-driven-architectures-aws-guide-2022-smb-build-websites-and-apps-resource.pdf 
+
+For comparison of AWS services:
+https://pages.awscloud.com/rs/112-TZM-766/images/APMWQ3D3S2%20Building%20event-driven%20architectures%20on%20AWS.pdf
