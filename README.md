@@ -85,6 +85,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Shopping carts]()
   - [DevOps Logs or IoT]()
   - [Instana]()
+  - [Collect users behavioral data]()
   - [Sport Streaming Applications]()
 
 - **Appendix**
@@ -5963,6 +5964,19 @@ To make our system more resilient we can do the following:
 - Using multiple read replicas for our databases.
 - Multiple instances and replicas for our distributed cache.
 - Exactly once delivery and message ordering is challenging in a distributed system, we can use a dedicated [message broker](https://karanpratapsingh.com/courses/system-design/message-brokers) such as [Apache Kafka](https://kafka.apache.org) or [NATS](https://nats.io) to make our notification system more robust.
+
+# Collect users behavioral data to derive insights
+
+See Segment for reference aboutuse case: https://hightouch.com/blog/what-is-segment-cdp
+
+See AWS Clickstream solution: https://aws.amazon.com/solutions/implementations/clickstream-analytics-on-aws/?did=sl_card&trk=sl_card
+
+See IBM Solutions for Kafka Streams: https://www.ibm.com/products/event-streams
+
+Goal: capture key events like page views or button clicks to understand behavioral tendencies. At its core, Segment helps you collect behavioral data on your users so you can build and manage audiences for marketing activation and automatically ingest that data back into the operational tools of your business teams.
+
+For data collection, Segment offers both client-side and server-side tracking. Client-side tracking runs on the user’s device, and server-side tracking occurs directly on your application servers. All data collection within Segment is powered by libraries that generate messages and send them to Segment’s standardized API in a basic structure outlined within the implementation of that code. Segment then forwards these events automatically to downstream destinations that you define.
+
 
 # Sport Streaming Applications
 
