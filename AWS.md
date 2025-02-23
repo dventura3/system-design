@@ -33,12 +33,6 @@ This happens until there is sufficient capacity available to meet demand. You do
 
 # Compare Event-Driven Architecture Solutions on AWS
 
-Resources about generic concepts for Event-Driven Architectures:
-https://d1.awsstatic.com/SMB/building-event-driven-architectures-aws-guide-2022-smb-build-websites-and-apps-resource.pdf 
-
-For comparison of AWS services:
-https://pages.awscloud.com/rs/112-TZM-766/images/APMWQ3D3S2%20Building%20event-driven%20architectures%20on%20AWS.pdf
-
 ## Events Routers
 
 ![image](./diagrams/aws-events-routers.png)
@@ -88,7 +82,7 @@ Amazon SNS uses a number of mechanisms that work together to provide message dur
 ![image](./diagrams/aws-event-bridge-vs-sns.png)
 
 
-# Events Stores
+## Events Stores
 
 ![image](./diagrams/aws-events-stores.png)
 
@@ -109,3 +103,38 @@ There are "two types" of Amazon Kinesis:
 - Amazon Kinesis Data Streams: https://aws.amazon.com/kinesis/data-streams/features/?nc=sn&loc=2
 - Amazon Kinesis Video Streams: https://aws.amazon.com/kinesis/video-streams/features/?nc=sn&loc=2
 
+
+
+## At-least-Once vs Exactly-Once
+
+Delivery Semantics:
+- At-least once delivery: events can be delivered to a target more than once. Include logic to detect duplicate events by tracking the state of processed events (idempotent).
+- Exactly-once delivery: specify an identifier used by the AWS service for deduplication. This can happen only outside of application error handling (i.e. if there is not error in receiving/processing the event).
+
+| Delivery Type | AWS Technology |
+| --------------- | ----------------- |
+| At-least-Once | EventBridge |
+| At-least-Once | SNS using Standard Topic |
+| At-least-Once | SQS using Standard Queue |
+| At-least-Once | Kinesis |
+| Exactly-Once | Amazon MQ |
+| Exactly-Once | Amazon MSK |
+| Exactly-Once | SNS using FIFO Topic |
+| Exactly-Once | SQS using FIFO Queue |
+
+## Unordered vs Ordered
+
+Ordering Semantics:
+- Unordered: Events can be delivered out of order.
+- Ordered: Events are delivered in order within a partition, message group, etc (no global order).
+
+| Ordering Type | AWS Technology |
+| --------------- | ----------------- |
+| Unordered | EventBridge |
+| Unordered | SNS using Standard Topic |
+| Unordered | SQS using Standard Queue |
+| Ordered | Amazon MQ |
+| Ordered | Amazon MSK |
+| Ordered | Kinesis |
+| Ordered | SNS using FIFO Topic |
+| Ordered | SQS using FIFO Queue |
