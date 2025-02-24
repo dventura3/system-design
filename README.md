@@ -24,6 +24,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Availability](#availability)
   - [Scalability](#scalability)
   - [Fault Tolerance vs Resiliancy](#fault-tolerance-vs-resiliancy)
+  - [Latency vs Throughput]()
   - [Storage](#storage)
   - [Global vs Local Service](#global-vs-local-service)
 
@@ -918,6 +919,52 @@ For example: If we run the above example on Kubernetes, the instance that failed
 
 These qualities are crucial for maintaining service reliability and user trust. Designing such systems involves the ability to self-detect faults and apply redundancy, failovers (i.e. when a replica take on the work to replace a broken server), and robust error handling.
 
+# Latency vs Throughput
+
+Latency and throughput are two metrics that **measure the performance of a computer network**.
+- **Latency** is the **delay** in network communication. It shows the time that data takes to transfer across the network. Networks with a longer delay or lag have high latency, while those with fast response times have lower latency.
+- In contrast, **throughput** refers to the **average volume of data** that can actually pass through the network over a specific time. It indicates the number of data packets that arrive at their destinations successfully and the data packet loss. => this means that if you do an HTTP request and gets an error "throughput exceeded", you could try later to make the HTTP request when less volume of data pass through the network.
+
+You can determine network speed by looking at how quickly a network can transfer data packets to their destinations. This speed is the result of network performance factors like latency and throughput.
+
+**Latency determines the delay that a user experiences when they send or receive data from the network. Throughput determines the number of users that can access the network at the same time.**
+
+A network with low throughput and high latency struggles to send and process high data volume, which results in congestion and poor application performance. In contrast, a network with high throughput and low latency is responsive and efficient. Users experience improved performance and increased satisfaction.
+
+Latency and throughput are metrix to consider because with a well designed system design, you could avoid issues related to latency and throughput.
+For example to fight throughput you could implement a re-try logic in your code. As well you need to keep track of how fast you reply to customers (i.e. in your logs keep track of qhen the request starts and when it finishes to know how sast/slow the response is provided to customers).
+
+## Unit of measurement
+- You measure latency in milliseconds. If you have a low number of milliseconds, your network is only experiencing a small delay. The higher the number in milliseconds, the slower the network is performing. 
+- Originally, you would measure network throughput in bits per second (bps). But, as data transmission technologies have improved, you can now achieve much higher values. Because of this, you can measure throughput in kilobytes per second (KBps), megabytes per second (MBps), and even gigabytes per second (GBps). One byte is equal to eight bits. 
+
+## Impacting factors: latency vs throughput
+Latency has several factors that contribute to it being high or low.
+- Location: One of the most important factors is the location of where data originates and its intended destination. If your servers are in a different geographical region from your device, the data has to travel further, which increases latency. This factor is called propagation.
+- Network congestion: Network congestion occurs when there is a high volume of data being transmitted over a network. The increased traffic on the network causes packets to take longer routes to their destination. 
+- Protocol efficiency: Some networks require additional protocols for security. The extra handshake steps create a delay. 
+- Network infrastructure: Network devices can become overloaded, which results in dropped packets. As packets are delayed or dropped, devices retransmit them. This adds additional latency. 
+
+Throughput speeds are directly impacted by other factors.
+- Bandwidth: If your network capacity has reached the maximum bandwidth of your transmission medium, its throughput will never be able to go beyond that limit. 
+- Processing power: Certain network devices have specialized hardware or software optimizations that improve their processing performance. Some examples are dedicated application-specific integrated circuits or software-based packet processing engines.
+- Packet loss: Packet loss can occur for a variety of reasons, including network congestion, faulty hardware, or misconfigured network devices. When packets are lost, they must be retransmitted. This results in delays and reduces the overall throughput of the network.
+- Network topology: A well-designed network topology provides multiple paths for data transmission, reduces traffic bottlenecks, and increases throughput. Networks with more devices or longer distances require complex network topologies to achieve high throughput.
+
+
+## Bandwidth vs Throughput
+Bandwidth represents the total volume of data that you can transfer over a network. Your total bandwidth refers to the theoretical maximum amount of data that you could transfer over a network. You measure it in megabytes per second (MBps). You can think of bandwidth as the theoretical maximum throughput of your network. 
+
+## How can you improve latency and throughput?
+- You can improve throughput by increasing the overall network bandwidth.
+- **Caching:** To improve latency, you can shorten the propagation between the source and destination. Caching helps in doing it. Caching in networking refers to the process of storing frequently accessed data geographically closer to the user. For example, you can store data in proxy servers or content delivery networks (CDNs). Your network can deliver data from the cached location much faster than if it had to be retrieved from the original source. And the user receives data much faster, improving latency. Additionally, because the data is retrieved from a cache, it reduces the load on the original source. This allows it to handle more requests at once, improving throughput.
+- **Transport protocols:** By optimizing the transport protocol that you use for specific applications, you can improve network performance. For instance, TCP and UDP are two common network protocols. TCP establishes a connection and checks that you receive data without any errors. Because of its goal of reducing packet loss, TCP has higher latency and higher throughput. UDP does not check for packet loss or errors, transmitting several duplicate packets instead. So, it gives minimal latency but a higher throughput. Depending on the application that you are using, TCP or UDP may be the better choice. For example, TCP is useful for transferring data, while UDP is useful for video streaming and gaming.
+- **Quality of service:** You can use a quality of service (QoS) strategy to manage and optimize network performance. QoS allows you to divide network traffic into specific categories. You can assign each category a priority level. Your QoS configurations prioritize latency-sensitive applications. Some applications and users experience lower latency than others. Your QoS configurations can also prioritize data by type, reducing packet loss and increasing throughput for certain users
+
+## Summary of differences: throughput vs latency
+![image](./diagrams/throughput-vs-latency.png)
+
+
 
 # Storage
 
@@ -982,6 +1029,7 @@ A NAS (Network Attached Storage) is a storage device connected to a network that
 The Hadoop Distributed File System (HDFS) is a distributed file system designed to run on commodity hardware. HDFS is highly fault-tolerant and is designed to be deployed on low-cost hardware. HDFS provides high throughput access to application data and is suitable for applications that have large data sets. It has many similarities with existing distributed file systems.
 
 HDFS is designed to reliably store very large files across machines in a large cluster. It stores each file as a sequence of blocks, all blocks in a file except the last block are the same size. The blocks of a file are replicated for fault tolerance.
+
 
 # Global vs Local Service
 
