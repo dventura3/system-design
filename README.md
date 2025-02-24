@@ -55,14 +55,19 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Enterprise Service Bus (ESB)](#enterprise-service-bus-esb)
   - [Monoliths and Microservices](#monoliths-and-microservices)
   - [Event-Driven Architecture (EDA)](#event-driven-architecture-eda)
+  - [Messaging Pattern: Event Bus](#messaging-pattern-event-bus)
+  - [Messaging Pattern: Event Streaming](#messaging-pattern-event-streaming)
+  - [Messaging Pattern: Event Sourcing](#messaging-pattern-event-sourcing)
+  - [Messaging Pattern: Choreography and Orchestration](#messaging-pattern-choreography-and-orchestration)
   - [Messaging Pattern: Event Sourcing](#event-sourcing)
-  - [CMessaging Pattern: ommand and Query Responsibility Segregation (CQRS)](#command-and-query-responsibility-segregation-cqrs)
+  - [Messaging Pattern: Command and Query Responsibility Segregation (CQRS)](#command-and-query-responsibility-segregation-cqrs)
   - [API Gateway](#api-gateway)
   - [REST, GraphQL, gRPC](#rest-graphql-grpc)
   - [Long polling, WebSockets, Server-Sent Events (SSE)](#long-polling-websockets-server-sent-events-sse)
 
 - **Chapter IV**
 
+  - [ETL vs ELT](#etl-extract-transform-load-vs-elt-extract-load-transform)
   - [Geohashing and Quadtrees](#geohashing-and-quadtrees)
   - [Circuit breaker](#circuit-breaker)
   - [Rate Limiting](#rate-limiting)
@@ -109,6 +114,8 @@ System design helps us define a solution that meets the business requirements. I
 one of the earliest decisions we can make when building a system. Often it is essential
 to think from a high level as these decisions are very difficult to correct later. It
 also makes it easier to reason about and manage architectural changes as the system evolves.
+
+![image](./diagrams/system-design-universe.gif)
 
 # IP
 
@@ -2983,6 +2990,7 @@ Below are some commonly used HTTP verbs:
 - **PUT**: Replaces all current representations of the target resource with the request payload.
 - **DELETE**: Deletes the specified resource.
 - **PATCH**: Applies partial modifications to a resource.
+- **OPTIONS**: This can be used to test the allowed HTTP methods for a request, or to determine whether a request would succeed when making a CORS preflighted request.
 
 **HTTP response codes**
 
@@ -3310,6 +3318,91 @@ Let's understand how server-sent events work:
 - Unidirectional nature can be limiting.
 - Limitation for the maximum number of open connections.
 - Does not support binary data.
+
+# ETL (Extract Transform Load) vs ELT (Extract Load Transform)
+
+Extract, transform, and load (ETL) is the process of combining data from multiple sources into a large, central repository (a data warehouse, data lake or other target system). ETL uses a set of "business rules" to clean and organize raw data and prepare it for storage, data analytics, and machine learning (ML). 
+
+Organizations today have both structured and unstructured data from various sources including:
+- Customer data from online payment and customer relationship management (CRM) systems
+- Inventory and operations data from vendor systems
+- Sensor data from Internet of Things (IoT) devices
+- Marketing data from social media and customer feedback
+- Employee data from internal human resources systems
+By applying the process of extract, transform, and load (ETL), individual raw datasets can be prepared in a format and structure that is more **consumable for analytics purposes**, resulting in more meaningful insights. For example, online retailers can analyze data from points of sale to forecast demand and manage inventory. Marketing teams can integrate CRM data with customer feedback on social media to study consumer behavior.
+
+## How ETL works
+
+**Step 1: Extract**
+During data extraction, raw data is copied or exported from source locations to a staging area. Data management teams can extract data from a variety of different sources, which can be structured or unstructured. Those data types include, but are not limited to:
+- SQL or NoSQL servers
+- CRM and ERP systems
+- JSON and XML
+- Flat-file databases
+- Email
+- Web pages
+
+**Step 2: Transform**
+In the staging area, the raw data undergoes data processing. Here, the data is transformed and consolidated for its intended analytical use case. This phase of the transformation process can include:
+- Filtering, cleansing, aggregating, de-duplicating, validating and authenticating the data.
+- Performing calculations, translations or summarizations based on the raw data. This can include changing row and column headers for consistency, converting currencies or other units of measurement, editing text strings and more.
+- Conducting audits to ensure data quality and compliance, and computing metrics.
+- Removing, encrypting or protecting data governed by industry or governmental regulators.
+- Formatting the data into tables or joined tables to match the schema of the target data warehouse.
+
+**Step 3: Load**
+In this last step, the transformed data is moved from the staging area into a target data warehouse. Typically, this involves an initial loading of all data, followed by periodic loading of incremental data changes and, less often, full refreshes to erase and replace data in the warehouse. For most organizations that use ETL, the process is automated, well-defined, continuous and batch-driven. Typically, the ETL load process takes place during off-hours when traffic on the source systems and the data warehouse is at its lowest.
+
+## Loading Data
+
+Two methods for loading data follow:
+1. Full load
+In full load, the entire data from the source is transformed and moved to the data warehouse. The full load usually takes place the first time you load data from a source system into the data warehouse.
+2. Incremental load 
+In incremental load, the ETL tool loads the delta (or difference) between target and source systems at regular intervals. It stores the last extract date so that only records added after this date are loaded. There are two ways to implement incremental load.
+    - Streaming incremental load => if you have small data volumes, you can stream continual changes over data pipelines to the target data warehouse. When the speed of data increases to millions of events per second, you can use event stream processing to monitor and process the data streams to make more-timely decisions.
+    - Batch incremental load => if you have large data volumes, you can collect load data changes into batches periodically. During this set period of time, no actions can happen to either the source or target system as data is synchronized.
+
+## ETL vs ELT
+The most obvious difference between ETL and ELT (Extract, load, transform) is the difference in order of operations. ELT copies or exports the data from the source locations, but instead of loading it to a staging area for transformation, it loads the raw data directly into the target data store to be transformed as needed.
+
+While both processes leverage a variety of data repositories, such as databases, data warehouses, and data lakes, each process has its advantages and disadvantages. ELT is useful for ingesting high-volume, unstructured data sets as loading can occur directly from the source. ELT can be more ideal for big data management since it doesn't need much upfront planning for data extraction and storage (planning the data structure and format needed for analytics processes can be done after data extraction and storage).
+
+The ETL process requires more definition at the beginning. Analytics needs to be involved from the start to define target data types, structures, and relationships. Even after that work is completed, the business rules for data transformations need to be constructed and re-defined/updated.
+
+A time-consuming batch operation, ETL is recommended more often for creating smaller target data repositories that require less frequent updating, while other data integration methods - including ELT (extract, load, transform), change data capture (CDC) and data virtualization - are used to integrate increasingly larger volumes of data that changes or real-time data streams.
+
+In Summary:
+- ETL => mainly use ETL to load legacy databases into the warehouse
+- ELT => mainly used with large data volume that changes or real-time data streams
+
+## Data Lake vs Data warehouse vs Data lakehouse
+
+While data lakes and data warehouses are similar in that they both store and process data, each have their own specialties, and therefore their own use cases. You coudl use both in your architecture... it depends on your use case!
+
+A data lake captures both relational and non-relational data from a variety of sources—business applications, mobile apps, IoT devices, social media, or streaming—without having to define the structure or schema of the data until it is read. Schema-on-read ensures that any type of data can be stored in its raw form. As a result, data lakes can hold a wide variety of data types, from structured to semi-structured to unstructured, at any scale. Their flexible and scalable nature make them essential for performing complex forms of data analysis using different types of compute processing tools like Apache Spark. They are mainly used in ELT processes.
+
+By contrast, a data warehouse is relational in nature. The structure or schema is modeled or predefined by business and product requirements that are curated, conformed, and optimized for SQL query operations. While a data lake holds data of all structure types, including raw and unprocessed data, a data warehouse stores data that has been treated and transformed with a specific purpose in mind, which can then be used to source analytic or operational reporting. This makes data warehouses ideal for producing more standardized forms of BI analysis, or for serving a business use case that has already been defined. They are mainly used in ETL processes.
+
+![image](./diagrams/datalakes-datawarehouse.png)
+
+
+Data lakes and data warehouses are typically used in tandem. Data lakes act as a catch-all system for new data, and data warehouses apply downstream structure to specific data from this system. However, coordinating these systems to provide reliable data can be costly in both time and resources. Long processing times contribute to data staleness and additional layers of ETL introduce more risk to data quality.
+
+The "unionn" of data lakes and data warehouse brought to create "Data lakehouse".
+Data lakehouses address the challenges of traditional data lakes by adding a Delta Lake storage layer directly on top of the cloud data lake. 
+The beauty of the lakehouse is that each workload can seamlessly operate on top of the data lake without having to duplicate the data into another structurally predefined database. This ensures that everyone is working on the most up-to-date data, while also reducing redundancies.
+Data lakehouses provide a flexible analytic architecture that can handle ACID (atomicity, consistency, isolation, and durability) transactions for data reliability, streaming integrations, and advanced features like data versioning and schema enforcement. This allows for a range of analytic activity over the lake, all without compromising core data consistency. While the necessity of a lakehouse depends on how complex your needs are, its flexibility and range make it an optimal solution for many enterprise orgs.
+
+Data lakehouse architecture
+A data lakehouse typically consists of five layers: ingestion layer, storage layer, metadata layer, API layer, and consumption layer. These make up the architectural pattern of data lakehouses.
+1. Ingestion layer: This first layer gathers data from a range of different sources and transforms it into a format that can be stored and analyzed in a lakehouse. The ingestion layer can use protocols to connect with internal and external sources such as database management systems, NoSQL databases, social media, and others. As the name suggests, this layer is responsible for the ingestion of data.
+1. Storage layer: In this layer, the structured, unstructured, and semi-structured data is stored in open-source file formats, such as such as Parquet or Optimized Row Columnar (ORC). The real benefit of a lakehouse is the system’s ability to accept all data types at an affordable cost.
+1. Metadata layer: The metadata layer is the foundation of the data lakehouse. It’s a unified catalog that delivers metadata for every object in the lake storage, helping organize and provide information about the data in the system. This layer also gives user the opportunity to use management features such as ACID transactions, file caching, and indexing for faster query. Users can implement predefined schemas within this layer, which enable data governance and auditing capabilities.
+1. API layer: A data lakehouse uses APIs, to increase task processing and conduct more advanced analytics. Specifically, this layer gives consumers and/or developers the opportunity to use a range of languages and libraries, such as TensorFlow, on an abstract level. The APIs are optimized for data asset consumption.
+1. Data consumption layer: This final layer of the data lakehouse architecture hosts client apps and tools, meaning it has access to all metadata and data stored in the lake. Users across an organization can make use of the lakehouse and carry out analytical tasks such as business intelligence dashboards, data visualization, and other machine learning jobs.
+
+
 
 # Geohashing and Quadtrees
 
