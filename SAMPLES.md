@@ -15,6 +15,10 @@
   - [Sport Streaming Applications]()
 
 
+# System Design Blueprint
+
+![image](./diagrams/system-design-blueprint.webp)
+
 
 # System Design Interviews
 
@@ -187,13 +191,13 @@ $$
 
 **What would be Requests Per Second (RPS) for our system?**
 
-100 million requests per month translate into 40 requests per second.
+100 million requests per month translate into 40 requests per second (this is about the WRITEs).
 
 $$
 \frac{100 \space million}{(30 \space days \times 24 \space hrs \times 3600 \space seconds)} = \sim 40 \space URLs/second
 $$
 
-And with a `100:1` read/write ratio, the number of redirections will be:
+And with a `100:1` read/write ratio, the number of redirections will be (this is about the READs):
 
 $$
 100 \times 40 \space URLs/second = 4000 \space requests/second

@@ -24,7 +24,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Availability](#availability)
   - [Scalability](#scalability)
   - [Fault Tolerance vs Resiliancy](#fault-tolerance-vs-resiliancy)
-  - [Latency vs Throughput]()
+  - [Latency vs Throughput vs Bandwidth](#latency-vs-throughput-vs-bandwidth)
   - [Storage](#storage)
   - [Global vs Local Service](#global-vs-local-service)
 
@@ -79,6 +79,10 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [OAuth 2.0 and OpenID Connect (OIDC)](#oauth-20-and-openid-connect-oidc)
   - [Single Sign-On (SSO)](#single-sign-on-sso)
   - [SSL, TLS, mTLS](#ssl-tls-mtls)
+
+- **Chapter V**
+
+  - [Scaling Applications: Give Me Numbers](#scaling-applications-give-me-numbers)
 
 - **Appendix**
 
@@ -919,7 +923,7 @@ For example: If we run the above example on Kubernetes, the instance that failed
 
 These qualities are crucial for maintaining service reliability and user trust. Designing such systems involves the ability to self-detect faults and apply redundancy, failovers (i.e. when a replica take on the work to replace a broken server), and robust error handling.
 
-# Latency vs Throughput
+# Latency vs Throughput vs Bandwidth
 
 Latency and throughput are two metrics that **measure the performance of a computer network**.
 - **Latency** is the **delay** in network communication. It shows the time that data takes to transfer across the network. Networks with a longer delay or lag have high latency, while those with fast response times have lower latency.
@@ -3955,6 +3959,54 @@ Mutual TLS, or mTLS, is a method for mutual authentication. mTLS ensures that th
 mTLS helps ensure that the traffic is secure and trusted in both directions between a client and server. This provides an additional layer of security for users who log in to an organization's network or applications. It also verifies connections with client devices that do not follow a login process, such as Internet of Things (IoT) devices.
 
 Nowadays, mTLS is commonly used by microservices or distributed systems in a [zero trust security model](https://en.wikipedia.org/wiki/Zero_trust_security_model) to verify each other.
+
+
+# Scaling Applications: give me numbers
+
+# Requests per Seconds
+
+If you're just trying to describe the scale of an application or system by order of magnitude, this is a guideline:
+- Low: < 10-100 rps
+- Moderate: 100-1000 rps
+- High (scale begins): 1,000-10,000 rps
+- Very High: 10,000-100,000
+- Extreme: > 100,000 rps
+
+But this^ are just relative numbers. 
+You need to consider different factors such as the HW (CPU, memory) where the service runs. 
+So, we can say that "heavy load" constitutes anything above 80% of what a service is provisioned to handle.
+
+
+### Some Real Cases
+
+- Google processes over 100K searches every second.
+- AWS IAM service processes 400 million requests per second worldwide.
+- Fastly’s processes over 32k
+
+Use Case with Fastly’s:
+Fastly’s declared a response time of about 0.166ms during HIT periods.
+So this metric can be converted in requests per seconds: 1000/0.166 = ~6000 req/s/cpu (the value 1000 is becasue 1sec == 1000ms).
+If we have a dual socket 16 (real) core/socket server => they can do theoretically about 192k req/s/server => Why? since in 1 CPU we can do ~6000 req/s, we can multiply this value for 16 socket, i.e. 6000 * 16 = 96000 req/sec/sockets => then we are considering a DUAL core, i.e. we multiple 96000 * 2 = 192000 req/s/server.
+However 192k req/s/server is the LIMIT... we do not really want to achieve this value!
+In order to avoid latency from getting bad, you want to run around a third of that, so 64k req/s/server. 
+Also, since the 0.166ms time was just for the hits (about 88% of utilization of the requests), we have to assume the real number of request/sec that they handle in a "normal" time, is much less than that. So we can assume you cut the number in half (32k req/s/server).
+
+
+### Sample: Scaling on AWS
+Currently my infrastructure uses AWS Api-gateway and Lambda. Currently I can handle 3k requests/second.
+Let's suppose we want to scale the system to handle 100K requests/sec. What can we do?
+
+Considerations:
+1. If your application will need to process +500 requests per second **constantly**, avoid using any service that is charged per number of requests, i.e. avoid using Lamba Functions. 100k requests/s **sustained** would translate to 262.8 billion requests/mo. Which apparently would be about $52k/mo just in invokes on lambda. Generally, if the load is predictable and sustained lambda may not be your ideal solution. if you have a sustained load - don't use lambdas for this. It will be both less performant and more expensive than traditional server application.
+1. Use a traditional server. Switch Lambda functions to server running on EC2s based on EKS stack (i.e. run containers on Kubernetes). You also need to use Load Balancers. So **the solution can be to use ALS behind NLB which goes to ECS clusters which can scale up or down**. Why ALB behind NLB?
+    - The ALB would give API routing, allow to resolve the dynamic endpoints of the cluster and do health checks. But ALB are rate limited to smaller amounts than NLB, i.e. they can't handle a HUGE amount of traffic.
+    - The HUGE amoung of traffic can be handled by NLB more efficiently. So you use the NLB as the primary load balancer and then scale out to additional ALBs behind the NLB
+1. Think about trying to **cache most of these requests**. You could use CND services (edge caching solutions) => but this depends on the context and the type of data you return. If you can return not the most "freshed" data, CND can be a good option. If you return static files, AWS S3 can be an option too.
+1. You likely want to have a service implemented using **compiled language** (golang)
+
+
+# Response Time: give me numbers
+TODO
 
 
 # Next Steps
