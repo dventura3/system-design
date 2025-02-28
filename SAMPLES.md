@@ -13,9 +13,9 @@
   - [Instana]()
   - [Collect users behavioral data]()
   - [Sport Streaming Applications]()
+  - [Instagram]() => Storing Images, videos, other types of data
 
 
-# System Design Blueprint
 
 ![image](./diagrams/system-design-blueprint.webp)
 
@@ -155,6 +155,9 @@ Our URL shortening system should meet the following requirements:
 - Users should be redirected to the original URL when they visit the short link.
 - Links should expire after a default timespan.
 
+Some questions we could have asked:
+- Should the service be used only by registered users (i.e. APIs protected only for logged in users), or anyone can use the service? => this would allow us to decide if we need a "user" table, if we need to call an "App ID" or "Cognito" service before actually creating the entry in the URL (in order to validate the user access token), and if we will need to have an Authorization header in the API calls.
+
 ### Non-functional requirements
 
 - High availability with minimal latency.
@@ -173,7 +176,7 @@ _Note: Make sure to check any scale or traffic related assumptions with your int
 
 ### Traffic
 
-This will be a read-heavy system, so let's assume a `100:1` read/write ratio with 100 million links generated per month.
+This will be a read-heavy system, so let's **assume** a `100:1` read/write ratio with 100 million links generated per month.
 
 **Reads/Writes Per month**
 
@@ -205,7 +208,7 @@ $$
 
 ### Bandwidth
 
-Since we expect about 40 URLs every second, and if we assume each request is of size 500 bytes then the total incoming data for write requests would be:
+Since we expect about 40 URLs every second, and if we **assume** each request is of size 500 bytes then the total incoming data for write requests would be:
 
 $$
 40 \times 500 \space bytes = 20 \space KB/second
@@ -219,7 +222,7 @@ $$
 
 ### Storage
 
-For storage, we will assume we store each link or record in our database for 10 years. Since we expect around 100M new requests every month, the total number of records we will need to store would be:
+For storage, we will assume we store each link or record in our database for 10 years. Since we expect around 100M new requests every month (this is the number of WRITEs), the total number of records we will need to store would be:
 
 $$
 100 \space million \times 10\space years \times 12 \space months = 12 \space billion
@@ -345,6 +348,7 @@ Result (`boolean`): Represents whether the operation was successful or not.
 ### Why do we need an API key?
 
 As you must've noticed, we're using an API key to prevent abuse of our services. Using this API key we can limit the users to a certain number of requests per second or minute. This is quite a standard practice for developer APIs and should cover our extended requirement.
+The concept of "API Key" is used as "Access Token" (to check if the user is authorized to do the operation) and, maybe, if you want to set a rate limit on the users number of request.
 
 ## High-level design
 
@@ -367,6 +371,7 @@ Where,
 `N`: Number of characters in the generated URL.
 
 So, if we want to generate a URL that is 7 characters long, we will generate ~3.5 trillion different URLs.
+The idea is that we can combine the different bianry data in the Base62 table to generate a string of 7 chars long.
 
 $$
 \begin{gather*}

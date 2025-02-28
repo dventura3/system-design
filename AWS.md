@@ -13,6 +13,10 @@ Wide-column	| Use when you need to migrate your on-premises Cassandra workloads,
 Graph | Use when you have to model complex networks of objects, such as social networks, fraud detection, and recommendation engine use cases. | Optimized for traversing and evaluating large numbers of relationships, and identifying patterns with minimal latency. | Amazon Neptune
 Time series	| Use when you have a large amount of time series data, potentially from a number of sources, such as Internet of Things (IoT) data, application metrics, and asset tracking. | Optimized for storing and querying data that is associated with timestamps and trend lines. | Amazon Timestream
 
+
+AWS Database Solutions:
+![Choose-DBs-2](./diagrams/aws-database-solutions.png)
+
 A summary (not including ALL the latest DBs services fromvided by AWS) below:
 ![Choose-DBs](./diagrams/AWS-choose-dbs.webp)
 

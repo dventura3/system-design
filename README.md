@@ -76,13 +76,15 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [SLA, SLO, SLI](#sla-slo-sli)
   - [Disaster recovery](#disaster-recovery)
   - [Virtual Machines (VMs) and Containers](#virtual-machines-vms-and-containers)
-  - [OAuth 2.0 and OpenID Connect (OIDC)](#oauth-20-and-openid-connect-oidc)
-  - [Single Sign-On (SSO)](#single-sign-on-sso)
-  - [SSL, TLS, mTLS](#ssl-tls-mtls)
+  - [Scaling Applications: Give Me Numbers](#scaling-applications-give-me-numbers)
+  - [Response Time: give me numbers](#response-time-give-me-numbers)
 
 - **Chapter V**
 
-  - [Scaling Applications: Give Me Numbers](#scaling-applications-give-me-numbers)
+  - [OAuth 2.0 and OpenID Connect (OIDC)](#oauth-20-and-openid-connect-oidc)
+  - [Single Sign-On (SSO)](#single-sign-on-sso)
+  - [SSL, TLS, mTLS](#ssl-tls-mtls)
+  - [Hashing Algorithms]()
 
 - **Appendix**
 
@@ -961,9 +963,32 @@ Bandwidth represents the total volume of data that you can transfer over a netwo
 
 ## How can you improve latency and throughput?
 - You can improve throughput by increasing the overall network bandwidth.
-- **Caching:** To improve latency, you can shorten the propagation between the source and destination. Caching helps in doing it. Caching in networking refers to the process of storing frequently accessed data geographically closer to the user. For example, you can store data in proxy servers or content delivery networks (CDNs). Your network can deliver data from the cached location much faster than if it had to be retrieved from the original source. And the user receives data much faster, improving latency. Additionally, because the data is retrieved from a cache, it reduces the load on the original source. This allows it to handle more requests at once, improving throughput.
+- **Caching on the memory of the service:** By caching data in memory on the service itself, we're reducing the amount of time it takes to fetch data data from the database, which can help to improve throughput and reduce latency.
+- **Use content delivery networks (CDN):** To improve latency, you can shorten the propagation between the source and destination. Caching helps in doing it. Caching in networking refers to the process of storing frequently accessed data geographically closer to the user. For example, you can store data in proxy servers or content delivery networks (CDNs). Your network can deliver data from the cached location much faster than if it had to be retrieved from the original source. And the user receives data much faster, improving latency. Additionally, because the data is retrieved from a cache, it reduces the load on the original source. This allows it to handle more requests at once, improving throughput.
 - **Transport protocols:** By optimizing the transport protocol that you use for specific applications, you can improve network performance. For instance, TCP and UDP are two common network protocols. TCP establishes a connection and checks that you receive data without any errors. Because of its goal of reducing packet loss, TCP has higher latency and higher throughput. UDP does not check for packet loss or errors, transmitting several duplicate packets instead. So, it gives minimal latency but a higher throughput. Depending on the application that you are using, TCP or UDP may be the better choice. For example, TCP is useful for transferring data, while UDP is useful for video streaming and gaming.
 - **Quality of service:** You can use a quality of service (QoS) strategy to manage and optimize network performance. QoS allows you to divide network traffic into specific categories. You can assign each category a priority level. Your QoS configurations prioritize latency-sensitive applications. Some applications and users experience lower latency than others. Your QoS configurations can also prioritize data by type, reducing packet loss and increasing throughput for certain users
+
+Here's an example of using caching to optimize performance in a Node.js application.
+In this example, we use NodeCache package to create an in-memory cache for product data. When a request comes in for a product, we first check if the product is in the cache. If it is, we return the cached product. If it's not, we fetch the product from the database and store it in the cache for future requests.
+```
+const NodeCache = require('node-cache');
+const cache = new NodeCache();
+
+function getProduct(productId) {
+    const cachedProduct = cache.get(productId);
+    if (cachedProduct) {
+        return cachedProduct;
+    }
+
+    // If the product is not in the cache, fetch it from the database
+    const product = fetchProductFromDatabase(productId);
+
+    // Store the product in the cache for future requests
+    cache.set(productId, product);
+
+    return product;
+}
+```
 
 ## Summary of differences: throughput vs latency
 ![image](./diagrams/throughput-vs-latency.png)
@@ -3789,6 +3814,56 @@ In traditional virtualization, a hypervisor virtualizes physical hardware. The r
 
 Instead of virtualizing the underlying hardware, containers virtualize the operating system so each container contains only the application and its dependencies making them much more lightweight than VMs. Containers also share the OS kernel and use a fraction of the memory VMs require.
 
+
+# Scaling Applications: give me numbers
+
+# Requests per Seconds
+
+If you're just trying to describe the scale of an application or system by order of magnitude, this is a guideline:
+- Low: < 10-100 rps
+- Moderate: 100-1000 rps
+- High (scale begins): 1,000-10,000 rps
+- Very High: 10,000-100,000
+- Extreme: > 100,000 rps
+
+But this^ are just relative numbers. 
+You need to consider different factors such as the HW (CPU, memory) where the service runs. 
+So, we can say that "heavy load" constitutes anything above 80% of what a service is provisioned to handle.
+
+
+### Some Real Cases
+
+- Google processes over 100K searches every second.
+- AWS IAM service processes 400 million requests per second worldwide.
+- Fastly’s processes over 32k
+
+Use Case with Fastly’s:
+Fastly’s declared a response time of about 0.166ms during HIT periods.
+So this metric can be converted in requests per seconds: 1000/0.166 = ~6000 req/s/cpu (the value 1000 is becasue 1sec == 1000ms).
+If we have a dual socket 16 (real) core/socket server => they can do theoretically about 192k req/s/server => Why? since in 1 CPU we can do ~6000 req/s, we can multiply this value for 16 socket, i.e. 6000 * 16 = 96000 req/sec/sockets => then we are considering a DUAL core, i.e. we multiple 96000 * 2 = 192000 req/s/server.
+However 192k req/s/server is the LIMIT... we do not really want to achieve this value!
+In order to avoid latency from getting bad, you want to run around a third of that, so 64k req/s/server. 
+Also, since the 0.166ms time was just for the hits (about 88% of utilization of the requests), we have to assume the real number of request/sec that they handle in a "normal" time, is much less than that. So we can assume you cut the number in half (32k req/s/server).
+
+
+### Sample: Scaling on AWS
+Currently my infrastructure uses AWS Api-gateway and Lambda. Currently I can handle 3k requests/second.
+Let's suppose we want to scale the system to handle 100K requests/sec. What can we do?
+
+Considerations:
+1. If your application will need to process +500 requests per second **constantly**, avoid using any service that is charged per number of requests, i.e. avoid using Lamba Functions. 100k requests/s **sustained** would translate to 262.8 billion requests/mo. Which apparently would be about $52k/mo just in invokes on lambda. Generally, if the load is predictable and sustained lambda may not be your ideal solution. if you have a sustained load - don't use lambdas for this. It will be both less performant and more expensive than traditional server application.
+1. Use a traditional server. Switch Lambda functions to server running on EC2s based on EKS stack (i.e. run containers on Kubernetes). You also need to use Load Balancers. So **the solution can be to use ALS behind NLB which goes to ECS clusters which can scale up or down**. Why ALB behind NLB?
+    - The ALB would give API routing, allow to resolve the dynamic endpoints of the cluster and do health checks. But ALB are rate limited to smaller amounts than NLB, i.e. they can't handle a HUGE amount of traffic.
+    - The HUGE amoung of traffic can be handled by NLB more efficiently. So you use the NLB as the primary load balancer and then scale out to additional ALBs behind the NLB
+1. Think about trying to **cache most of these requests**. You could use CND services (edge caching solutions) => but this depends on the context and the type of data you return. If you can return not the most "freshed" data, CND can be a good option. If you return static files, AWS S3 can be an option too.
+1. You likely want to have a service implemented using **compiled language** (golang)
+
+
+# Response Time: give me numbers
+TODO
+
+
+
 # OAuth 2.0 and OpenID Connect (OIDC)
 
 ## OAuth 2.0
@@ -3961,53 +4036,63 @@ mTLS helps ensure that the traffic is secure and trusted in both directions betw
 Nowadays, mTLS is commonly used by microservices or distributed systems in a [zero trust security model](https://en.wikipedia.org/wiki/Zero_trust_security_model) to verify each other.
 
 
-# Scaling Applications: give me numbers
+# Hashing Algorithms
 
-# Requests per Seconds
+## Base62
+The base62 encoding scheme uses 62 characters. The characters consist of the capital letters A-Z, the lower case letters a-z and the numbers 0–9. It is a binary-to-text encoding scheme that represents binary data in an ASCII string format.
 
-If you're just trying to describe the scale of an application or system by order of magnitude, this is a guideline:
-- Low: < 10-100 rps
-- Moderate: 100-1000 rps
-- High (scale begins): 1,000-10,000 rps
-- Very High: 10,000-100,000
-- Extreme: > 100,000 rps
-
-But this^ are just relative numbers. 
-You need to consider different factors such as the HW (CPU, memory) where the service runs. 
-So, we can say that "heavy load" constitutes anything above 80% of what a service is provisioned to handle.
+Basically there is a match between a binary char and a ASCII char.
+See table in [https://en.wikipedia.org/wiki/Base62](https://en.wikipedia.org/wiki/Base62).
 
 
-### Some Real Cases
+## Base64
+This is **NOT** an hashing algorithm...
 
-- Google processes over 100K searches every second.
-- AWS IAM service processes 400 million requests per second worldwide.
-- Fastly’s processes over 32k
+Base64 encoding schemes are commonly used when there is a need to encode binary data that needs be stored and transferred over media that are designed to deal with textual data. This is to ensure that the data remains intact without modification during transport.
 
-Use Case with Fastly’s:
-Fastly’s declared a response time of about 0.166ms during HIT periods.
-So this metric can be converted in requests per seconds: 1000/0.166 = ~6000 req/s/cpu (the value 1000 is becasue 1sec == 1000ms).
-If we have a dual socket 16 (real) core/socket server => they can do theoretically about 192k req/s/server => Why? since in 1 CPU we can do ~6000 req/s, we can multiply this value for 16 socket, i.e. 6000 * 16 = 96000 req/sec/sockets => then we are considering a DUAL core, i.e. we multiple 96000 * 2 = 192000 req/s/server.
-However 192k req/s/server is the LIMIT... we do not really want to achieve this value!
-In order to avoid latency from getting bad, you want to run around a third of that, so 64k req/s/server. 
-Also, since the 0.166ms time was just for the hits (about 88% of utilization of the requests), we have to assume the real number of request/sec that they handle in a "normal" time, is much less than that. So we can assume you cut the number in half (32k req/s/server).
+When we send over data, we cannot be sure that the data would be interpreted in the same format as we intended it to be. So, we send over data coded in some format (like Base64) that both parties understand. That way even if sender and receiver interpret same things differently, but because they agree on the coded format, the data will not get interpreted wrongly.
 
 
-### Sample: Scaling on AWS
-Currently my infrastructure uses AWS Api-gateway and Lambda. Currently I can handle 3k requests/second.
-Let's suppose we want to scale the system to handle 100K requests/sec. What can we do?
+Here is a working example:
 
-Considerations:
-1. If your application will need to process +500 requests per second **constantly**, avoid using any service that is charged per number of requests, i.e. avoid using Lamba Functions. 100k requests/s **sustained** would translate to 262.8 billion requests/mo. Which apparently would be about $52k/mo just in invokes on lambda. Generally, if the load is predictable and sustained lambda may not be your ideal solution. if you have a sustained load - don't use lambdas for this. It will be both less performant and more expensive than traditional server application.
-1. Use a traditional server. Switch Lambda functions to server running on EC2s based on EKS stack (i.e. run containers on Kubernetes). You also need to use Load Balancers. So **the solution can be to use ALS behind NLB which goes to ECS clusters which can scale up or down**. Why ALB behind NLB?
-    - The ALB would give API routing, allow to resolve the dynamic endpoints of the cluster and do health checks. But ALB are rate limited to smaller amounts than NLB, i.e. they can't handle a HUGE amount of traffic.
-    - The HUGE amoung of traffic can be handled by NLB more efficiently. So you use the NLB as the primary load balancer and then scale out to additional ALBs behind the NLB
-1. Think about trying to **cache most of these requests**. You could use CND services (edge caching solutions) => but this depends on the context and the type of data you return. If you can return not the most "freshed" data, CND can be a good option. If you return static files, AWS S3 can be an option too.
-1. You likely want to have a service implemented using **compiled language** (golang)
+I wish to send a text message with two lines:
+```
+Hello
+world!
+```
 
+If I send it as ASCII (or UTF-8) it will look like this:
+`72 101 108 108 111 10 119 111 114 108 100 33`
 
-# Response Time: give me numbers
-TODO
+The byte 10 is corrupted in some systems so we can base 64 encode these bytes as a Base64 string:
+`SGVsbG8Kd29ybGQh`
 
+Which when encoded using ASCII looks like this:
+`83 71 86 115 98 71 56 75 100 50 57 121 98 71 81 104`
+
+All the bytes here are known safe bytes, so there is very little chance that any system will corrupt this message. I can send this instead of my original message and let the receiver reverse the process to recover the original message.
+
+## MD5
+
+The MD5 message-digest algorithm is a widely used hash function producing a 128-bit hash value.
+MD5 can be used as a checksum to verify data integrity against unintentional corruption. Historically it was widely used as a cryptographic hash function; however it has been found to suffer from extensive vulnerabilities. It remains suitable for other non-cryptographic purposes.
+
+Issue of MD5:
+One basic requirement of any cryptographic hash function is that it should be computationally infeasible to find two distinct messages that hash to the same value. MD5 fails this requirement catastrophically. MD5 is vulnerable to collision attack, which means a digest is not really unique... two inputs could generate the same digest!!
+
+Where MD5 is it used?
+- determining the partition for a particular key in a partitioned database
+- recognizing a corrupt or incomplete download, which becomes more likely when downloading larger files => File servers services often provide a pre-computed MD5 (known as md5sum) checksum for the files, so that a user can compare the checksum of the downloaded file to it. As it is easy to generate MD5 collisions, it is possible for the person who created the file to create a second file with the same checksum, so this technique cannot protect against some forms of malicious tampering. In some cases, the checksum cannot be trusted (for example, if it was obtained over the same channel as the downloaded file), in which case MD5 can only provide error-checking functionality: it will recognize a corrupt or incomplete download, which becomes more likely when downloading larger files.
+
+## Secure Hash-Algorithms
+
+The Secure Hash Algorithms are a family of cryptographic hash functions published by the National Institute of Standards and Technology (NIST) as a U.S. Federal Information Processing Standard (FIPS), including:
+- SHA-0: A retronym applied to the original version of the 160-bit hash function published in 1993 under the name "SHA". It was withdrawn shortly after publication due to an undisclosed "significant flaw" and replaced by the slightly revised version SHA-1.
+- SHA-1: A 160-bit hash function which resembles the earlier MD5 algorithm. This was designed by the National Security Agency (NSA) to be part of the Digital Signature Algorithm. Cryptographic weaknesses were discovered in SHA-1, and the standard was no longer approved for most cryptographic uses after 2010.
+- SHA-2: A family of two similar hash functions, with different block sizes, known as SHA-256 and SHA-512. They differ in the word size; SHA-256 uses 32-bit words where SHA-512 uses 64-bit words. There are also truncated versions of each standard, known as SHA-224, SHA-384, SHA-512/224 and SHA-512/256. These were also designed by the NSA.
+- SHA-3: A hash function formerly called Keccak, chosen in 2012 after a public competition among non-NSA designers. It supports the same hash lengths as SHA-2, and its internal structure differs significantly from the rest of the SHA family.
+
+More details in [https://en.wikipedia.org/wiki/Secure_Hash_Algorithms](https://en.wikipedia.org/wiki/Secure_Hash_Algorithms).
 
 # Next Steps
 
