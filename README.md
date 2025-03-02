@@ -1889,6 +1889,13 @@ The pre-commit phase accomplishes the following:
 
 ## Sagas
 
+When to use SAGA?
+- Your system requires data integrity and consistency in distributed transactions that span multiple data stores (=> when difference services have access to different DBs and each service is responsible to update these different DBs).
+- The data store (for example, a NoSQL database) doesn't provide 2PC to provide ACID transactions, you need to update multiple tables within a single transaction, and implementing 2PC within the application boundaries would be a complex task.
+- A central controlling process that manages the participant transactions might become a single point of failure.
+- The saga participants are independent services and need to be loosely coupled.
+
+
 ![sagas](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-II/distributed-transactions/sagas.png)
 
 A saga is a sequence of local transactions. Each local transaction updates the database and publishes a message or event to trigger the next local transaction in the saga. If a local transaction fails because it violates a business rule then the saga executes a series of compensating transactions that undo the changes that were made by the preceding local transactions.
@@ -1897,8 +1904,22 @@ A saga is a sequence of local transactions. Each local transaction updates the d
 
 There are two common implementation approaches:
 
-- **Choreography**: Each local transaction publishes domain events that trigger local transactions in other services.
+- **aga-Choreography**: Each local transaction publishes domain events that trigger local transactions in other services.
 - **Orchestration**: An orchestrator tells the participants what local transactions to execute.
+
+### Saga with Choreography
+
+Reference: https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-choreography.html
+
+![saga-choreography](./diagrams/saga-choreography.png)
+
+
+### Saga with Orchestration
+
+Reference: https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-orchestration.html
+
+![saga-orchestration](./diagrams/saga-orchestration.png)
+
 
 ### Problems
 
@@ -2861,12 +2882,24 @@ Choreography and orchestration are two different models for how distributed serv
 
 Instead of storing just the current state of the data in a domain, use an append-only store to record the full series of actions taken on that data. The store acts as the system of record and can be used to materialize the domain objects.
 
-This can simplify tasks in complex domains, by avoiding the need to synchronize the data model and the business domain, while improving performance, scalability, and responsiveness. It can also provide consistency for transactional data, and maintain full audit trails and history that can enable compensating actions.
+When to use Event Sourcing?
+- An immutable history of the events that occur in an application is required for tracking.
+- Point-in time reconstruction of the application state is needed.
+- Long-term storage of application state isn't required, but you might want to reconstruct it as needed.
+- You want to derive what-if scenarios by changing (inserting, updating, or deleting) events during the replay process to determine the possible end state.
 
 ![event-sourcing](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-III/event-sourcing/event-sourcing.png)
 
+Reference: https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/event-sourcing.html
 
-## Event sourcing vs Event-Driven Architecture (EDA)
+![event-sourcing](./diagrams/event-sourcing-pattern-01.png)
+
+![event-sourcing](./diagrams/event-sourcing-pattern-02.png)
+
+![event-sourcing](./diagrams/event-sourcing-pattern-03.png)
+
+
+## Event Sourcing vs Event-Driven Architecture (EDA)
 
 Event sourcing is seemingly constantly being confused with [Event-driven Architecture (EDA)](https://karanpratapsingh.com/courses/system-design/event-driven-architecture). **Event-driven architecture** is about using **events to communicate between service boundaries**. Generally, leveraging a message broker to publish and consume events asynchronously within other boundaries.
 
@@ -4143,5 +4176,6 @@ Here are the resources that were referenced while creating this course.
 - [Martin Fowler](https://martinfowler.com)
 - [PagerDuty resources](https://www.pagerduty.com/resources)
 - [VMWare Blogs](https://blogs.vmware.com/learning)
+- [System Design Primer](https://github.com/donnemartin/system-design-primer?tab=readme-ov-file)
 
 _All the diagrams were made using [Excalidraw](https://excalidraw.com) and are available [here](https://github.com/karanpratapsingh/system-design/tree/main/diagrams)._

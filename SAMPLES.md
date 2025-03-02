@@ -8,11 +8,15 @@
   - [Twitter](#twitter)
   - [Netflix](#netflix)
   - [Uber](#uber) 
-  - [Shopping carts]()
+  - [Tickets Booking System](#tickets-booking-system)
   - [DevOps Logs or IoT]()
   - [Instana]()
   - [Collect users behavioral data]()
   - [Sport Streaming Applications]()
+  - [Coordinate Access to Resources](#coordinate-access-to-resources)
+  - [Distributed Counter](#distributed-counter)
+  - [Assigning range of numbers to different workers](#assigning-range-of-numbers-to-different-workers)
+  - [URL Crawlers](#url-crawlers)
   - [Instagram]() => Storing Images, videos, other types of data
 
 
@@ -370,7 +374,7 @@ Where,
 
 `N`: Number of characters in the generated URL.
 
-So, if we want to generate a URL that is 7 characters long, we will generate ~3.5 trillion different URLs.
+So, if we want to generate a URL that is 7 characters long, we will generate ~3.5 trillion different URLs => this is because the number of ALL the possible combinations having 7 chars long is 62^7.
 The idea is that we can combine the different bianry data in the Base62 table to generate a string of 7 chars long.
 
 $$
@@ -404,6 +408,8 @@ $$
 The problem with this approach is that it can quickly become a single point for failure. And if we run multiple instances of the counter we can have collision as it's essentially a distributed system.
 
 To solve this issue we can use a distributed system manager such as [Zookeeper](https://zookeeper.apache.org) which can provide distributed synchronization. Zookeeper can maintain multiple ranges for our servers.
+
+ZooKeeper is a high-performance coordination service for distributed applications. It exposes common services - such as naming, configuration management, synchronization, and group services - in a simple interface so you don't have to write them from scratch. You can use it off-the-shelf to implement consensus, group management, leader election, and presence protocols. And you can build on it for your own, specific needs.
 
 $$
 \begin{align*}
@@ -535,6 +541,9 @@ To make our system more resilient we can do the following:
 - Using multiple read replicas for our database as it's a read-heavy system.
 - Standby replica for our key database in case it fails.
 - Multiple instances and replicas for our distributed cache.
+
+## Other solution
+Visit: https://systemdesign.one/url-shortening-system-design/
 
 # WhatsApp
 
@@ -2161,6 +2170,13 @@ To make our system more resilient we can do the following:
 - Multiple instances and replicas for our distributed cache.
 - Exactly once delivery and message ordering is challenging in a distributed system, we can use a dedicated [message broker](https://karanpratapsingh.com/courses/system-design/message-brokers) such as [Apache Kafka](https://kafka.apache.org) or [NATS](https://nats.io) to make our notification system more robust.
 
+
+# Tickets Booking System
+
+https://blog.devgenius.io/why-distributed-locks-are-important-17dfef01a6db
+
+
+
 # Collect users behavioral data to derive insights
 
 See Segment for reference aboutuse case: https://hightouch.com/blog/what-is-segment-cdp
@@ -2178,3 +2194,61 @@ For data collection, Segment offers both client-side and server-side tracking. C
 
 Streaming applications – Media and entertainment companies use DynamoDB as a metadata index for content, content management service, or to serve near real-time sports statistics. They also use DynamoDB to run user watchlist and bookmarking services and process billions of daily customer events for generating recommendations. These customers benefit from DynamoDB's scalability, performance, and resiliency. DynamoDB scales to workload changes as they ramp up or down, enabling streaming media use cases that can support any levels of demand.
 
+
+
+# Coordinate Access to Resources
+
+## Problem
+I have a database accessed by an several servers, let's call them workers. These workers take one item from the database, do some operations on it and then update it back into the database. The workers are also volatile, there can be any amount of them and they can die/start at any time.
+
+My problem is coordination of resources across workers. I want to ensure that there aren't 2 workers working on the same item. I also want to ensure that if a worker dies while he was working on an item, this item will be released to another server (either immediately or via timeout).
+
+How can I ensure this coordination?
+
+## Solution
+
+Use built-in database synchronization. All enterprise-class SQL databases are ACID-compliant, as are most NoSQL databases.
+Lavaraging on the built-in database synchronization, allows that only one process will "enter" a record in a DB and apply changes to that record.
+However, you need to implement a logic to "lock" the item (i.e. make sure that only 1 worker will work on a item while other worker can work on other items).
+So, you need to implement a "lock" mechanism. 
+A simple approach to lock the item which a worker will work on:
+1. Worker acquires a task. You may need to use a DB-specific syntax for this:
+`UPDATE task SET status = 'in process', worker = (this worker's ID) WHERE status = 'new' LIMIT 1`
+2. Worker get the actual task
+`SELECT * FROM task WHERE status = 'in process' AND worker = (this worker's ID)`
+3. Worker works on the task: it can periodically update a timestamp on the task to indicate it is not timing out.
+4. Worker finishes: it updates the task to set its status to complete and save the results wherever they need to go.
+
+I would have a job running in the background to look for timed out tasks and reset them. This would likely be simpler than adding extra logic to the SELECT query.
+
+There are likely existing solutions out there to do this. Using them may be easier than rolling your own depending on the complexity of managing the tasks and your requirements. Specifically, something like Hadoop would likely both get the job done and be overkill for what you describe here.
+
+
+# Distributed Counter
+
+https://systemdesign.one/distributed-counter-system-design/#what-is-a-distributed-counter
+
+https://bugfree.ai/practice/system-design/distributed-counter/solutions/wl1_BQT-XZQLqWpX
+
+
+https://netflixtechblog.com/netflixs-distributed-counter-abstraction-8d0c45eb66b2
+
+https://dev.to/fedekau/crdts-and-distributed-consistency-part-1-building-a-distributed-counter-22d3
+
+
+# Assigning range of numbers to different workers
+
+https://stackoverflow.com/questions/79478943/design-a-distributed-system-to-assign-a-range-of-numbers-of-a-counter-to-differe
+
+# URL Crawlers
+
+Reference: https://softwareengineering.stackexchange.com/questions/445649/workers-and-orchestrator
+
+
+# Type of System Design Architectures
+
+Type of System Deisgn Architectures to explore: https://bugfree.ai/course/system-design-interview/url-shortening-service
+And solutions https://blog.bugfree.ai/?_gl=1*142znum*_gcl_au*Mjk1ODU4MzQwLjE3NDA4MjIyNDk. 
+
+Other great samples:
+https://systemdesign.one/categories/ 
