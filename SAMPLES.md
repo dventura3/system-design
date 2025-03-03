@@ -2238,7 +2238,37 @@ https://dev.to/fedekau/crdts-and-distributed-consistency-part-1-building-a-distr
 
 # Assigning range of numbers to different workers
 
-https://stackoverflow.com/questions/79478943/design-a-distributed-system-to-assign-a-range-of-numbers-of-a-counter-to-differe
+##  Context
+
+I have a counter between 0 to 5 Trillion. The counter is used by several services (replicated inside a clusters in several PODs) for some processing tasks, for exampel to calculate a shorten URL given a URL using the "counter" approach (descibed [above](#url-shortener)).
+I want to assign a range of this counter to each worker node and distribute the work among them.
+The range we want to assign at each worker is 500 "units" big. 
+
+Therefore, for example if we have 3 workers we initially would assign to:
+- node0 the range 0-499
+- node1 has 500-999
+- node2 has 1000-1499
+
+Once one of the workers decrement its local counter and reach value 0, a new range of the initial counter has to be assigned to the worker. This process continues until the counter reach 5 Trillion (thanks to the "aggregated" work of the 3/more worker nodes). 
+The number can change and increase/decrease while the processing run. Also Workers can crash... therefore a system to keep track of which worker has been assigned to what range should be part of the design.
+
+## Proposed Solution
+
+The ranges of the counter is a SHARED resources.
+We need to think about a mechanism to avoid multiple nodes to assign themself the same ranges of the counter.
+The ranges of the counter have to be uniquely assigned.
+
+Main points of the solution:
+- We use the orchestration pattern. A coordinator is the "owner" of a DB where to save a "shapshot" of the current ranges distributed to the workers, i.e. which worker has been assigned to what range.
+- A backgrond cronjob/thread runs in the workers to let the coordinator know they are alive.
+- A background cronjob/thread runs in the coordinator to know if a range which was assigned to a worker, should actually been released.
+- The coordiantor keep in memory information about:
+    - notAssignedRanges => a stack to pull the ranges that still needs to be assigned, i.e. ranges still available
+    - snapshopt of ranges alredy assigned and the node which is assigned to use the range
+
+ All Detail in the file [HERE](./docs/MySystemDesign_RangeOfCounter.pptx)
+
+
 
 # URL Crawlers
 
