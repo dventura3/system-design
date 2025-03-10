@@ -40,9 +40,23 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [ACID and BASE consistency models](#acid-and-base-consistency-models)
   - [CAP theorem](#cap-theorem)
   - [PACELC Theorem](#pacelc-theorem)
-  - [Transactions](#transactions)
-  - [Distributed Transactions](#distributed-transactions)
-  - [Sharding](#sharding)
+  - [Concurrency Control in DBs](#concurrency-control-in-dbs)
+      - [Transactions: on one single DB](#transactions-on-one-single-db)
+      - [Distributed Transactions](#distributed-transactions)
+          - [Two Phase Commit](#two-phase-commit)
+          - [Three Phase Commit](#three-phase-commit)
+          - [SAGA](#sagas)
+      - [DB Locking Mechanisms](#db-locking-mechanisms)
+      - [Isolation](#isolation)
+          - [Dirty Reads](#dirty-reads)
+          - [Unrepeatable Reads](#unrepeatable-reads)
+          - [Phantom Reads](#phantom-reads)
+          - [Resolution of concurrency issues using isolation levels and locking mechanisms](#resolution-of-concurrency-issues-using-isolation-levels-and-locking-mechanisms)
+      - [Concurrency Control Mechanisms: Pessimistic Concurrency Control vs Optimistic Concurrency Control](#concurrency-control-mechanisms-pessimistic-concurrency-control-vs-optimistic-concurrency-control)
+          - [Optimistic Concurrency Control](#optimistic-concurrency-control-occ)
+          - [Pessimistic Concurrency Control](#pessimistic-concurrency-control-pcc)
+  - [Data Partinioning](#data-partitioning)
+      - [Sharding](#sharding)
   - [Consistent Hashing](#consistent-hashing)
   - [Database Federation](#database-federation)
   - [How to Choose the Right Database?](#how-to-choose-the-right-database)
@@ -1088,6 +1102,9 @@ A database is an organized collection of structured information, or data, typica
 
 A database typically requires a comprehensive database software program known as a Database Management System (DBMS). A DBMS serves as an interface between the database and its end-users or programs, allowing users to retrieve, update, and manage how the information is organized and optimized. A DBMS also facilitates oversight and control of databases, enabling a variety of administrative operations such as performance monitoring, tuning, and backup and recovery.
 
+There are two types of DBMSs: relational and non-relational, also referred to as SQL and NoSQL respectively.
+
+
 ## Components
 
 Here are some common components found across different databases:
@@ -1112,7 +1129,7 @@ Data in a table is recorded in rows. There can be thousands or millions of rows 
 
 ![database-types](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-II/databases-and-dbms/database-types.png)
 
-Below are different types of databases:
+Below are different types of DBMS:
 
 - **[SQL](https://karanpratapsingh.com/courses/system-design/sql-databases)**
 - **[NoSQL](https://karanpratapsingh.com/courses/system-design/nosql-databases)**
@@ -1124,6 +1141,10 @@ Below are different types of databases:
   - Multi-model
 
 SQL and NoSQL databases are broad topics and will be discussed separately in [SQL databases](https://karanpratapsingh.com/courses/system-design/sql-databases) and [NoSQL databases](https://karanpratapsingh.com/courses/system-design/nosql-databases). Learn how they compare to each other in [SQL vs NoSQL databases](https://karanpratapsingh.com/courses/system-design/sql-vs-nosql-databases).
+
+
+[!relational-vs-no-relational](./diagrams/relational-vs-non-relational-databases-in-a-nutshe.png)
+
 
 ## Challenges
 
@@ -1775,11 +1796,53 @@ PACELC theorem was developed to address a key limitation of the CAP theorem as i
 
 For example, according to the CAP theorem, a database can be considered available if a query returns a response after 30 days. Obviously, such latency would be unacceptable for any real-world application.
 
-# Transactions
+# Concurrency Control in DBs
 
-A transaction is a series of database operations that are considered to be a _"single unit of work"_. The operations in a transaction either all succeed, or they all fail. In this way, the notion of a transaction supports data integrity when part of a system fails. Not all databases choose to support ACID transactions, usually because they are prioritizing other optimizations that are hard or theoretically impossible to implement together.
+Reference:
+- https://medium.com/approved-tech/concurrency-concurrency-control-74bb04d0e9fd => Summary about concurrency, transactions, locking, isolation
+- https://www.youtube.com/watch?v=D3XhDu--uoI => Video about concurrency, transactions, locking, isolation
+- https://docs.raima.com/rdm/14_2/ug/sql/ConcurrentDbAccess.htm => Concurrency for SQL DBs
+- https://docs.couchdb.org/en/stable/replication/conflicts.html#conflict-avoidance => Concurrency for CouchDB (NoSQL)
+
+
+# Transactions (on one single DB)
+
+A transaction is a series of database operations that are considered to be a _"single unit of work"_. The operations in a transaction either all succeed, or they all fail. Transaction helps to achieve **data INTEGRITY**, it means that it helps us to avoid **INCONSISTENCY** in our database when part of a system fails. Not all databases choose to support ACID transactions, usually because they are prioritizing other optimizations that are hard or theoretically impossible to implement together.
 
 _Usually, relational databases support ACID transactions, and non-relational databases don't (there are exceptions)._
+
+For Example: Let's suppose you want to implement a "Revolut" Transaction, i.e. debit the money from account A and credit the money to account B.
+
+The goal is to transfer 20 euro from A to B.
+
+The initial state is:
+- Account A has 100 euro
+- Account B has 50 euro
+
+The operations you would do are:
+1. Check if Account A has enough money/balance, i.e. there are at least 20 euro in account A
+2. If yes, substract 20 euro from account A, and therefore the new balance in account A would be 80 euro.
+3. Add 20 euro to account B, and therefore the new balance in account B would be 70 euro.
+
+If a failure happens in between steps 2-3, you would hand up in an INCONSISTENT state, regardless of concurrency process (i.e. even just with a SINGLE process and a SINGLE DB).
+Indeed, let's suppose the process is able to run step 1 and 2. This means, account A would have 80 euro. However the process crashes at this point, and it does not execute step 3. What happen is that Account B would still have only 50 euro, and basically 20 europ disappeared "magically".
+
+> _Transactions do not solve the problem of concurrency process. Transactions solve the problem of INCONSISTENCY._
+> _Use Transactions when multiple operations/TRANSISTIONs on a DB or multiple DBs have to succeed in order to have a consistent status on the DB._
+
+The above example would need to be implemented using Transactions, such as:
+
+```
+BEGIN TRANSACTION
+     - Debit the money from account A
+     - Credit the money to account B
+     - If both success:
+        COMMIT
+      - Else:
+        ROLLBACK
+END TRANSACTION
+```
+
 
 ## States
 
@@ -1815,6 +1878,7 @@ The database recovery module can select one of the two operations after a transa
 ### Terminated
 
 If there isn't any roll-back or the transaction comes from the _committed state_, then the system is consistent and ready for a new transaction and the old transaction is terminated.
+
 
 # Distributed Transactions
 
@@ -1920,7 +1984,6 @@ Reference: https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design
 
 ![saga-orchestration](./diagrams/saga-orchestration.png)
 
-
 ### Problems
 
 - The Saga pattern is particularly hard to debug.
@@ -1928,15 +1991,161 @@ Reference: https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design
 - Lack of participant data isolation imposes durability challenges.
 - Testing is difficult because all services must be running to simulate a transaction.
 
-# Sharding
 
-Before we discuss sharding, let's talk about data partitioning:
+# DB Locking Mechanisms
 
-## Data Partitioning
+When multiple process/work nodes runs and can access a DB, you might need to manage concurrency.
+Transactions are not the solution to concurrency, but to data integrity.
+When **concurrency** is the problem, databases (especially SQL DB) provide the - so called - **locking mechanism**.
+
+> _Locking mechanism is essentially a semaphore that guarantees that only one process can have read or write access to the data at any one time._
+> _Locking mechanism manages the ACCESS to the data and allows or blocks a process from ACCESSING the data (in read only or write mode)._
+
+If the locking mechanism is on a table or row or document depends on the DB... on how the DB implement the locking mechanism and what feature it provides.
+
+Locking mechanism is very commong in SQL DBs, while not that common (very rare, not used at all) in NoSQL DBs. So, concurrent access to data in a DB (a table/rows/ducuments) is usually handle in this way:
+- If **SQL DBs** => Use **table or row locking**.
+- If **NoSQL DBs** => Use **versioning**. NoSQL DBs usually DO NOT use locking. They allow concurrent operations to proceed without locking or blocking, but check for conflicts at the end of each operation. For example [CouchDB's conflict avoidance model uses versining](https://docs.couchdb.org/en/stable/replication/conflicts.html#conflict-avoidance).
+
+There are two types of Locking mechanism:
+- **Shared Locks** => it locks a table/row for read-only access. This means that multiple process can access the table/row ONLY for read statemens (i.e. SELECT statements). During the time that a table is read locked, no modifications/writes can occur on the table.
+- **Exclusive Locks** => it locks a table for exclusive access by the connection which was granted the write lock. When one connection has been granted a write lock on a table, lock requests from other connections are queued and granted on a first-come, first-served basis.
+
+| Lock type | Another Process with Shared Lock | Another Process with Exclusive Lock| 
+| ------------------------ | ------------------------ | ------------------------ |
+| Shared Lock |  YES | NO |
+| Exclusive Lock | NO | NO |
+
+
+# Isolation
+
+**Isolation** (in connection with Locking Mechanism) is used to handle and solve issues about **concurrency**.
+
+Concurrency introduces several challenges, including potential conflicts between **simultaneous operations**, which can lead to these issues:
+- **Dirty Reads (R-W)**: When a transaction reads data modified by another transaction but has yet to be committed.
+- **Unrepeatable Reads (W-R)**: When a transaction reads the same data multiple times, and the data changes between reads due to another transaction.
+- **Phantom Reads (W-R)**: When a transaction reads a set of rows that match a particular condition, but a concurrent transaction inserts, deletes, or updates rows, causing the result set to change.
+- **Lost Updates (W-W)**: Data is lost when concurrent transactions overwrite each other’s changes.
+
+![concurrency-isolation-01](./diagrams/concurrency-isolation-01.png)
+
+To address these challenges, isolation levels are defined to **control the visibility of data** changes during a transaction.
+Different isolation levels specify the extent to which **the operations in one transaction are isolated from those in other transactions**. The standard isolation levels are four:
+- **Read Uncommitted**: Allows transactions to read uncommitted changes made by other transactions, leading to possible dirty reads, unrepeatable reads, phantom reads, lost updates.
+- **Read Committed**: Ensures that transactions can only read committed changes, preventing dirty reads but not necessarily the other issues.
+- **Repeatable Read**: This guarantees that if a transaction reads a row, it will see the same value if it rereads the row, preventing dirty reads and unrepeatable reads.
+- **Serializable**: Provides the highest level of isolation by ensuring that transactions are executed in a way that results in a serializable order, preventing all types of concurrency issues.
+
+> Before makins a transaction, you have to set the level of isolation you want the transaction to use. If you do not explicitly set the level of isolation, the DB will use the default setting (which depends on the DB's type).
+
+
+## Dirty Reads
+
+Dirty Reads happens when transaction A is reading the data which is writing by transaction B and not yet commited.
+If transaction B does a rollback, then whatever data was read by transaction A was a dirt read, i.e. was wrong.
+
+For example, let's suppose we are implementing a system to book flights's seats.
+Before doing the checkout and process the payment, we need to mkae sure the seat is still available ("free") and not "booked".
+Let's suppose seat with ID=1 wants to be booked by a user running transaction A. In the meanwhile, another transaction B runs in parallel and reads the status of the seat with ID=1 as being booked...
+Unfortunatly transaction A fails, causing transaction B to process the data "beliving" that the seat with ID=1 was booked... This is a Dirty Read!
+
+![isolation-dirty-reads](./diagrams/isolation-dirty-reads.png)
+
+
+## Unrepeatable Reads
+
+Unrepeatable Reads happens when transaction A read the same raw several times and there is the chance that it reads different values before that the transacton A ends/is committed.
+
+![isolation-unrepeatable-reads](./diagrams/isolation-unrepeatable-reads.png)
+
+
+## Phantom Reads
+
+Phantom Reads happens when transaction A executes the same query several times and there is the change that the raws returned are different.
+
+Example: transaction A read the document with It between 1 and 5. Initially it finds only 2 documents.
+In the mantime transaction B insert a new document with ID 3.
+So the second time transaction A execute the query, it would get 3 documents instead of 2 documents.
+
+![isolation-phantom-reads](./diagrams/isolation-phantom-reads.png)
+
+
+## Resolution of concurrency issues using isolation levels and locking mechanisms
+
+To solve the issues about running transactions in parallel and concurrently, we use the locking mechanisms that will produce isolation. 
+
+![isolation-resolution-with-locking](./diagrams/isolation-resolution-with-locking.png)
+
+There are 4 levels of isolation:
+- **Read Uncommitted**: do not use any locking mechanism. You can apply this level of isolation only when transactions in parallel ONLY reads data (no writes involved).
+- **Read Committed**: exclusive lock is applied only when a transition executes a "write", while in case of read the transaction acquires the shared lock.
+
+| Time | Transaction A | Transaction B | Transaction C | Operation
+| --------- | --------------------- | -------------------- | -------------------- | -------------------- |
+| T1 | Makes an UPDATE | - | - | Transaction A acquires an exclusive lock untill end of the transaction. Data is updated from value "free" to "booked" 
+| T2 | - | Try to read data in the DB | - | Transaction B is blocked becasue Transaction A has the lock. Therefore no read is actually done.
+| T3 | Issues in Transaction A (crashes) | - | - | Transaction A is rolled back. The data is set back to "free"
+| T4 | - | Transaction B can now start the execution | - | Transaction B reads the value "free" (not the dirty-read value of "booked"). While reading it, transaction B places a shared lock on the data, but it is released as soon the read ends.
+| T5 | - | - | Transaction C wants to update the data | Transaction C can access the data because nobody has placed a lock on the data (since the lock after the reads is immediatly released in the step above). Transaction C acquires the exclusive lock and set the value to "booked".
+| T6 | - | Transaction B can't continue the operations until transaction C ends (because it has the lock) | - | Lock is still with transacton C.
+| T7 | - | - | Commit | The data is updated with "booked"
+| T8 | - | Transaction B can continue... but it had previously read the wrong data (it has read "available") | - | Unrepeatable Reads is NOT solved.
+
+- **Repeatable Read**: both in reads and writes operations the locks are released at the end of the transaction (when it is commited or rolled backed) => it solves both the Dirty Reads and Unrepeatable Reads issues.
+- **Serializable**: same as repeatable reads + use of rage locks. A range lock is a lock applied or on the WHOLE TABLE or on all the rows that satisfy a condition in a transaction + the nearby rows (basically not just 1 row is locked, but more a range of data) => it fixes Dirty Reads, Unrepeatable Reads and Lost Updates issues.
+
+# Concurrency Control Mechanisms: Pessimistic Concurrency Control vs Optimistic Concurrency Control
+
+Isolation levels can be implemented using various techniques, generally categorized into two main groups: Optimistic Concurrency Control (OCC) and Pessimistic Concurrency Control (PCC). These techniques enforce the chosen isolation level and safeguard data consistency and integrity. They effectively manage concurrent transactions, ensuring that data integrity is preserved while allowing multiple users to interact with the database simultaneously. 
+When selecting an appropriate isolation level for your application, it’s crucial to consider the specific needs of your system.
+OCC includes methods that assume conflicts are infrequent, enabling a more relaxed handling of transactions. Examples include timestamp ordering and validation-based (use of "version") approaches. In contrast, PCC encompasses techniques that assume conflicts are likely to occur, necessitating stricter controls. Examples include two-phase locking and the use of shared and exclusive locks.
+
+| Optimistic Concurrency Control | Pessimistic Concurrency Control
+| ------------------------------- | ------------------------------- |
+| Isolation level used below "Repeatable Read" | Isolation level used is Repeatable Read or Serializable|
+| Much Higher Concurrency | Less Concurrency (transaction might be just running in sequence instead of in parallel) |
+| No chance of deadlock | Deadlock is possible. The transaction stack in deadlock are forced to aborted and rolled back |
+| In case of Conflicts, overhead of transaction to rollback and retry logic has to be implemented | In case a transaction takes a lot of time (it's a long running transaction that blocks other transactions to run), it might cause other transactions to timeout and fail (while they wait for the lock to be available) |
+
+
+## Optimistic Concurrency Control (OCC)
+
+In OCC, a transaction reads data without locking it (or, you can imagine using a "shared lock"). Before committing, it checks if other transactions have modified the data making a comperison of a version number or a timestamp value (or, you can imagine using an "exclusive lock" when "writing" to a document/row). For instance, multiple users can edit a document simultaneously without locking it in a collaborative document editing application. When a user attempts to save their changes, the system checks if any other user has modified the document since it was last loaded. If conflicts are detected (e.g., two users edited the same paragraph), the system prompts the user to resolve the conflict, often by merging changes or selecting which version to keep. This approach allows for greater flexibility and collaboration while maintaining data integrity.
+
+NoSQL DBs usually implement the OCC approach, while SQL DBs usually do not implement this approach => but you can add a colum called "version" if you want to implement OCC in SQL DBs.
+
+In summary, we can say that the DBs that uses OCC uses two types of isolation methods. If the locking mechanis is used or not, might depends on the implementation in the DB.
+- Read Uncommitted
+- Read Committed
+
+![optimistic-concurrency-control](./diagrams/optimistic-concurrency-control.png)
+
+An example:
+
+![optimistic-concurrency-control-sample](./diagrams/concurrency-optimistic-approach-sample.png)
+
+And using the flow diagram:
+
+![optimistic-concurrency-control-flow](./diagrams/concurrency-optimistic-approach-flow.png)
+
+
+## Pessimistic Concurrency Control (PCC)
+
+PCC employs locks to prevent other transactions from accessing data that is being modified. For example, if one transaction locks a seat for booking in a reservation system, other transactions will be blocked from modifying or booking that seat until the lock is released. This approach ensures that no two transactions can conflict over the same resource.
+
+In summary, it uses all the isolation approaches => It's up to the develop, set which isolation level you want.
+
+![pessimistic-concurrency-control](./diagrams/pessimistic-concurrency-control.png)
+
+The problem of using PCC (in particula of using "Repeatable Read" and "serialization") is that **DEADLOCK** might happen.
+For this reason the locks have a **TIMEOUT** associated to it. In this way, if there ia a deadllock, the lock is relaased after the timout, the transaction is aborted and the deadlock is "fixed".
+
+
+# Data Partitioning
 
 Data partitioning is a technique to break up a database into many smaller parts. It is the process of splitting up a database or a table across multiple machines to improve the manageability, performance, and availability of a database.
 
-### Methods
+## Partitioning Methods: Horizontal vs Vertical Partitioning
 
 There are many different ways one could use to decide how to break up an application database into multiple smaller DBs. Below are two of the most popular methods used by various large-scale applications:
 
@@ -1950,7 +2159,7 @@ In vertical partitioning, we partition the data vertically based on columns. We 
 
 In this tutorial, we will specifically focus on sharding.
 
-## What is sharding?
+## Sharding
 
 Sharding is a database architecture pattern related to _horizontal partitioning_, which is the practice of separating one table's rows into multiple different tables, known as _partitions_ or _shards_. Each partition has the same schema and columns, but also a subset of the shared data. Likewise, the data held in each is unique and independent of the data held in other partitions.
 
