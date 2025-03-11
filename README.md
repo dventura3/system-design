@@ -1802,7 +1802,7 @@ Reference:
 - https://medium.com/approved-tech/concurrency-concurrency-control-74bb04d0e9fd => Summary about concurrency, transactions, locking, isolation
 - https://www.youtube.com/watch?v=D3XhDu--uoI => Video about concurrency, transactions, locking, isolation
 - https://docs.raima.com/rdm/14_2/ug/sql/ConcurrentDbAccess.htm => Concurrency for SQL DBs
-- https://docs.couchdb.org/en/stable/replication/conflicts.html#conflict-avoidance => Concurrency for CouchDB (NoSQL)
+- https://docs.couchdb.org/en/stable/replication/conflicts.html#conflict-avoidance => Concurrency in CouchDB (NoSQL)
 
 
 # Transactions (on one single DB)
@@ -2033,7 +2033,7 @@ To address these challenges, isolation levels are defined to **control the visib
 Different isolation levels specify the extent to which **the operations in one transaction are isolated from those in other transactions**. The standard isolation levels are four:
 - **Read Uncommitted**: Allows transactions to read uncommitted changes made by other transactions, leading to possible dirty reads, unrepeatable reads, phantom reads, lost updates.
 - **Read Committed**: Ensures that transactions can only read committed changes, preventing dirty reads but not necessarily the other issues.
-- **Repeatable Read**: This guarantees that if a transaction reads a row, it will see the same value if it rereads the row, preventing dirty reads and unrepeatable reads.
+- **Repeatable Read**: This guarantees that if a transaction reads a row, it will see the same value if it re-reads the row later, preventing dirty reads and unrepeatable reads.
 - **Serializable**: Provides the highest level of isolation by ensuring that transactions are executed in a way that results in a serializable order, preventing all types of concurrency issues.
 
 > Before makins a transaction, you have to set the level of isolation you want the transaction to use. If you do not explicitly set the level of isolation, the DB will use the default setting (which depends on the DB's type).
@@ -2096,6 +2096,8 @@ There are 4 levels of isolation:
 
 # Concurrency Control Mechanisms: Pessimistic Concurrency Control vs Optimistic Concurrency Control
 
+> Concurrency control is the mechanism that prevents data corruption or inconsistency when concurrent operations access the same data.
+
 Isolation levels can be implemented using various techniques, generally categorized into two main groups: Optimistic Concurrency Control (OCC) and Pessimistic Concurrency Control (PCC). These techniques enforce the chosen isolation level and safeguard data consistency and integrity. They effectively manage concurrent transactions, ensuring that data integrity is preserved while allowing multiple users to interact with the database simultaneously. 
 When selecting an appropriate isolation level for your application, it’s crucial to consider the specific needs of your system.
 OCC includes methods that assume conflicts are infrequent, enabling a more relaxed handling of transactions. Examples include timestamp ordering and validation-based (use of "version") approaches. In contrast, PCC encompasses techniques that assume conflicts are likely to occur, necessitating stricter controls. Examples include two-phase locking and the use of shared and exclusive locks.
@@ -2110,13 +2112,17 @@ OCC includes methods that assume conflicts are infrequent, enabling a more relax
 
 ## Optimistic Concurrency Control (OCC)
 
-In OCC, a transaction reads data without locking it (or, you can imagine using a "shared lock"). Before committing, it checks if other transactions have modified the data making a comperison of a version number or a timestamp value (or, you can imagine using an "exclusive lock" when "writing" to a document/row). For instance, multiple users can edit a document simultaneously without locking it in a collaborative document editing application. When a user attempts to save their changes, the system checks if any other user has modified the document since it was last loaded. If conflicts are detected (e.g., two users edited the same paragraph), the system prompts the user to resolve the conflict, often by merging changes or selecting which version to keep. This approach allows for greater flexibility and collaboration while maintaining data integrity.
+In OCC, a transaction reads data without locking it. Before committing, it checks if other transactions have modified the data making a comperison of a version number or a timestamp value. For instance, multiple users can edit a document simultaneously without locking it in a collaborative document editing application. When a user attempts to save their changes, the system checks if any other user has modified the document since it was last loaded. If conflicts are detected (e.g., two users edited the same paragraph), the system prompts the user to resolve the conflict, often by merging changes or selecting which version to keep. This approach allows for greater flexibility and collaboration while maintaining data integrity.
 
 NoSQL DBs usually implement the OCC approach, while SQL DBs usually do not implement this approach => but you can add a colum called "version" if you want to implement OCC in SQL DBs.
 
-In summary, we can say that the DBs that uses OCC uses two types of isolation methods. If the locking mechanis is used or not, might depends on the implementation in the DB.
-- Read Uncommitted
-- Read Committed
+In summary, NoSQL databases typically use optimistic concurrency control, which means that they allow concurrent operations to proceed without locking or blocking, but check for **CONFLICTS** at the end of each operation. If a conflict is detected, the operation is aborted and the user or application is notified to retry or resolve the conflict manually.
+
+OCC does not use locking mechanism, however there might be DBs that use a "light"/"relaxed" locking mechanism to implement OCC. Generally we can say that the DBs that uses OCC uses two types of isolation methods. If the locking mechanis is used or not, might depends on the implementation in the DB.
+- Read Uncommitted => No isolation and locking mechanism
+- Read Committed => this is the basic type of isolation and locking mechanism
+
+A sample of how to solve conflicts is provided in CouchDB documentation [HERE](https://docs.couchdb.org/en/stable/replication/conflicts.html#conflict-avoidance).
 
 ![optimistic-concurrency-control](./diagrams/optimistic-concurrency-control.png)
 
@@ -2135,10 +2141,11 @@ PCC employs locks to prevent other transactions from accessing data that is bein
 
 In summary, it uses all the isolation approaches => It's up to the develop, set which isolation level you want.
 
-![pessimistic-concurrency-control](./diagrams/pessimistic-concurrency-control.png)
-
 The problem of using PCC (in particula of using "Repeatable Read" and "serialization") is that **DEADLOCK** might happen.
 For this reason the locks have a **TIMEOUT** associated to it. In this way, if there ia a deadllock, the lock is relaased after the timout, the transaction is aborted and the deadlock is "fixed".
+
+![pessimistic-concurrency-control](./diagrams/pessimistic-concurrency-control.png)
+
 
 
 # Data Partitioning

@@ -18,6 +18,7 @@
   - [Assigning range of numbers to different workers](#assigning-range-of-numbers-to-different-workers)
   - [URL Crawlers](#url-crawlers)
   - [Instagram]() => Storing Images, videos, other types of data
+  - [Google Map]() => Storing GIS https://www.linkedin.com/advice/0/how-can-you-handle-nosql-database-concurrency-gjkge#:~:text=NoSQL%20databases%20typically%20use%20optimistic,the%20end%20of%20each%20operation.
 
 
 
