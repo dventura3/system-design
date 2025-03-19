@@ -8,9 +8,8 @@
   - [Twitter](#twitter)
   - [Netflix](#netflix)
   - [Uber](#uber) 
-  - [Tickets Booking System](#tickets-booking-system)
-  - [DevOps Logs or IoT]()
-  - [Instana]()
+  - [Flights Tickets Booking System](#flights-tickets-booking-system)
+  - [Logging System](#logging-system)
   - [Collect users behavioral data]()
   - [Sport Streaming Applications]()
   - [Coordinate Access to Resources](#coordinate-access-to-resources)
@@ -19,7 +18,7 @@
   - [URL Crawlers](#url-crawlers)
   - [Instagram]() => Storing Images, videos, other types of data
   - [Google Map]() => Storing GIS https://www.linkedin.com/advice/0/how-can-you-handle-nosql-database-concurrency-gjkge#:~:text=NoSQL%20databases%20typically%20use%20optimistic,the%20end%20of%20each%20operation.
-
+  - [Useful links](#useful-links)
 
 
 ![image](./diagrams/system-design-blueprint.webp)
@@ -507,7 +506,7 @@ Now let us talk about [caching](https://karanpratapsingh.com/courses/system-desi
 
 As we discussed before, we can use solutions like [Redis](https://redis.io) or [Memcached](https://memcached.org) and cache 20% of the daily traffic but what kind of cache eviction policy would best fit our needs?
 
-[Least Recently Used (LRU)](<https://en.wikipedia.org/wiki/Cache_replacement_policies#Least_recently_used_(LRU)>) can be a good policy for our system. In this policy, we discard the least recently used key first.
+[Least Recently Used (LRU)](<https://en.wikipedia.org/wiki/Cache_replacement_policies#Least_recently_used_(LRU)>) can be a good policy for our system. In this policy, we discard the least recently used key first (scartiamo prima la chiave utilizzata meno di recente).
 
 **How to handle cache miss?**
 
@@ -560,9 +559,10 @@ Our system should meet the following requirements:
 
 ### Functional requirements
 
-- Should support one-on-one chat.
+- Should support one-on-one chat (in real-time).
 - Group chats (max 100 people).
 - Should support file sharing (image, video, etc.).
+- Storing messages if a user (recipient of the message) is offline, and notify thme of existing messages (push notification) when the user is online.
 
 ### Non-functional requirements
 
@@ -573,7 +573,7 @@ Our system should meet the following requirements:
 
 - Sent, Delivered, and Read receipts of the messages.
 - Show the last seen time of users.
-- Push notifications.
+- Push notifications (send users a notification about a new message).
 
 ## Estimation and Constraints
 
@@ -2172,11 +2172,17 @@ To make our system more resilient we can do the following:
 - Exactly once delivery and message ordering is challenging in a distributed system, we can use a dedicated [message broker](https://karanpratapsingh.com/courses/system-design/message-brokers) such as [Apache Kafka](https://kafka.apache.org) or [NATS](https://nats.io) to make our notification system more robust.
 
 
-# Tickets Booking System
+# Flights Tickets Booking System
 
 https://blog.devgenius.io/why-distributed-locks-are-important-17dfef01a6db
 
 
+
+# Logging System
+
+https://www.youtube.com/watch?v=gvIn5QBdGDk 
+or 
+Instana
 
 # Collect users behavioral data to derive insights
 
@@ -2283,3 +2289,10 @@ And solutions https://blog.bugfree.ai/?_gl=1*142znum*_gcl_au*Mjk1ODU4MzQwLjE3NDA
 
 Other great samples:
 https://systemdesign.one/categories/ 
+
+
+# Useful Links
+
+- [System Design Interview Preparation Series](https://www.codekarle.com/) => very detailed explanation of system design architectures
+- [YouTube Playlist: ConceptandCoding - Patterns, Concepts and Samples of System Designs](https://www.youtube.com/@ConceptandCoding/videos)
+- [Bugfree](https://bugfree.ai/course) => course to gain knowledge about system designs. Good list of "types" of system design architecture which might be workth exploring

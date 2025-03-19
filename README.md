@@ -1712,6 +1712,39 @@ Below are some disadvantages of denormalization:
 - Increases data redundancy.
 - More chances of data inconsistency.
 
+## Samples of 1-to-1, 1-to-N and N-to-N relationships
+
+**Relation 1-to-1:**
+
+Le regole di lettura:
+- ogni cliente deve occupare una camera
+- ogni camera può essere occupata da un cliente
+
+=> You could merge the two tables...
+
+![relation1t1](./diagrams/relation-1to1.png)
+
+**Relation 1-to-N:**
+
+Percorrendo la figura da sinistra verso destra, si può formulare la prima regola di lettura, mentre, percorrendo la figura successiva da destra verso sinistra, si può formulare la seconda regola di lettura:
+- ogni alunno deve appartenere ad una sola classe
+- ad ogni classe possono appartenere uno o più alunni
+
+![relation1toN](./diagrams/relation-1toN.png)
+
+**Relation N-to-N:**
+
+Le regole di lettura:
+- Ogni autoveicolo deve essere di proprietà di una o più persone;
+- Ogni persona può essere proprietaria di uno o più autoveicoli;
+- Ogni autoveicolo deve essere alimentato con un (tipo di) carburante;
+- Ogni (tipo di) carburante può alimentare uno o più autoveicoli.
+
+=> You should introduce a new table to separate the relation N-to-N
+
+![relationNtoN](./diagrams/relation-NtoN.png)
+
+
 # ACID and BASE consistency models
 
 Let's discuss the ACID and BASE consistency models.
@@ -3537,7 +3570,7 @@ Web applications were initially developed around a client-server model, where th
 
 HTTP Long polling is a technique used to push information to a client as soon as possible from the server. As a result, the server does not have to wait for the client to send a request.
 
-In Long polling, the server does not close the connection once it receives a request from the client. Instead, the server responds only if any new message is available or a timeout threshold is reached.
+In Long polling, the server does not close the HTTP connection once it receives a request from the client. Instead, the server responds only if any new message is available or a timeout threshold is reached.
 
 ![long-polling](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-III/long-polling-websockets-server-sent-events/long-polling.png)
 
@@ -3548,7 +3581,7 @@ Once the client receives a response, it immediately sends a new request to the s
 Let's understand how long polling works:
 
 1. The client makes an initial request and waits for a response.
-2. The server receives the request and delays sending anything until an update is available.
+2. The server receives the request and **delays sending** anything until an update is available.
 3. Once an update is available, the response is sent to the client.
 4. The client receives the response and makes a new request immediately or after some defined interval to establish a connection again.
 
@@ -3561,15 +3594,15 @@ Here are some advantages of long polling:
 
 ### Disadvantages
 
-A major downside of long polling is that it is usually not scalable. Below are some of the other reasons:
+A major downside of long polling is that it is usually **not scalable**. Below are some of the other reasons:
 
-- Creates a new connection each time, which can be intensive on the server.
+- **Creates a new connection each time**, which can be intensive on the server.
 - Reliable message ordering can be an issue for multiple requests.
 - Increased latency as the server needs to wait for a new request.
 
 ## WebSockets
 
-WebSocket provides full-duplex communication channels over a single TCP connection. It is a persistent connection between a client and a server that both parties can use to start sending data at any time.
+WebSocket provides full-duplex communication channels over a **single TCP connection**. It is a persistent connection between a client and a server that both parties can use to start sending data at any time.
 
 The client establishes a WebSocket connection through a process known as the WebSocket handshake. If the process succeeds, then the server and client can exchange data in both directions at any time. The WebSocket protocol enables the communication between a client and a server with lower overheads, facilitating real-time data transfer from and to the server.
 
@@ -3587,6 +3620,24 @@ Let's understand how WebSockets work:
 4. A WebSocket connection will be opened once the client receives a successful handshake response.
 5. Now the client and server can start sending data in both directions allowing real-time communication.
 6. The connection is closed once the server or the client decides to close the connection.
+
+In Nodejs, the basic library to use websocket is `ws` (see example in `./src/real-time-webSocket` folder) which gives you the API to connect to a websocket and to send messages to other clients connected to the same server using the websocket.
+The idea is that a (express) server runs as a normal server, but also is able to use the websocket. Indeed the handshake phase is initialised by a client making a "normal" http request (that's why the server uses express and works as a normal http server in backgroud)...then it's the server that replys to the client enstabilishes the websocket connection => we can imaging webSocket as a layer on top of HTTP.
+
+The `ws` library **DOES NOT provide more advanced functionalities** such as:
+- sending messaging only to a sub-group of clients connected to the server, i.e. create "rooms"
+- does not provide a mechanism to broadcast messages when you have separated & multiple servers
+
+A different Nodejs library, called `socket.io`, provides advanced functionalities. We can imagine `socket.io` to be built on top fo `ws` and therefore it has more features (see example in `./src/real-time-socketIO-with-rooms` folder).
+The library provides the basic feature of connecting to a server using WebSockets, sents/emits events, listens to and receives events.
+But it also provides more advanced features, such as:
+- [Creating rooms and sends events only to the clients connected to a room](https://socket.io/docs/v4/rooms/). A room is an arbitrary channel that sockets/clients can join and leave. It can be used to broadcast events to a subset of clients:
+- [Brodacasting messages to ALL clients connected to separate servers](https://socket.io/docs/v4/broadcasting-events/#with-multiple-socketio-servers). In this case you need to have a Redis server which you will connect the socket.io adapter.
+- [Brodacasting messages ONLY to clients that are in the same room and are connected to separate servers](https://socket.io/docs/v4/rooms/#with-multiple-socketio-servers). In this case you need to have a Redis server which you will connect the socket.io adapter. See picture below to understand the use case.
+
+![socketIO-broadcastInRoom-separateServers](./diagrams/socketIO-broadcastInRoom-separateServers.png)
+
+
 
 ### Advantages
 
@@ -4393,5 +4444,6 @@ Here are the resources that were referenced while creating this course.
 - [PagerDuty resources](https://www.pagerduty.com/resources)
 - [VMWare Blogs](https://blogs.vmware.com/learning)
 - [System Design Primer](https://github.com/donnemartin/system-design-primer?tab=readme-ov-file)
+- [YouTube Playlist: ConceptandCoding - Patterns, Concepts and Samples of System Designs](https://www.youtube.com/@ConceptandCoding/videos)
 
 _All the diagrams were made using [Excalidraw](https://excalidraw.com) and are available [here](https://github.com/karanpratapsingh/system-design/tree/main/diagrams)._
