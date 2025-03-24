@@ -55,9 +55,9 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
       - [Concurrency Control Mechanisms: Pessimistic Concurrency Control vs Optimistic Concurrency Control](#concurrency-control-mechanisms-pessimistic-concurrency-control-vs-optimistic-concurrency-control)
           - [Optimistic Concurrency Control](#optimistic-concurrency-control-occ)
           - [Pessimistic Concurrency Control](#pessimistic-concurrency-control-pcc)
-  - [Data Partinioning](#data-partitioning)
+  - [Data Partitioning](#data-partitioning)
       - [Sharding](#sharding)
-  - [Consistent Hashing](#consistent-hashing)
+      - [Consistent Hashing](#consistent-hashing)
   - [Database Federation](#database-federation)
   - [How to Choose the Right Database?](#how-to-choose-the-right-database)
 
@@ -92,6 +92,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Virtual Machines (VMs) and Containers](#virtual-machines-vms-and-containers)
   - [Scaling Applications: Give Me Numbers](#scaling-applications-give-me-numbers)
   - [Response Time: give me numbers](#response-time-give-me-numbers)
+  - [API Pagination](#api-pagination)
 
 - **Chapter V**
 
@@ -2217,6 +2218,8 @@ This strategy divides the rows into different partitions based on a hashing algo
 
 The disadvantage of this method is that dynamically adding/removing database servers becomes expensive.
 
+See #consistent-hashing section below for details about the approaches to use "Hash-Based" partitioning.
+
 ### List-Based
 
 In list-based partitioning, each partition is defined and selected based on the list of values on a column rather than a set of contiguous ranges of values.
@@ -2257,7 +2260,7 @@ Here are some reasons why sharding might be the right choice:
 - Better performance as each machine is under less load.
 - When more concurrent connections are required.
 
-# Consistent Hashing
+## Consistent Hashing
 
 Let's first understand the problem we're trying to solve.
 
@@ -2443,6 +2446,9 @@ Below are some disadvantages of federated databases:
 - Query performance and scalability.
 
 # How to Choose the Right Database?
+
+- Reference: [Criteria to Choose the DB](https://www.youtube.com/watch?v=ym0cXSKZYnw)
+- Reference: [How to Pick the RIght DB](https://www.youtube.com/watch?v=kkeFE6iRfMM)
 
 What to do when you are designing a system and you need to choose the Database solution.
 
@@ -4163,6 +4169,11 @@ Considerations:
 TODO
 
 
+# API Pagination
+
+https://www.youtube.com/watch?v=14K_a2kKTxU
+
+
 
 # OAuth 2.0 and OpenID Connect (OIDC)
 
@@ -4445,5 +4456,6 @@ Here are the resources that were referenced while creating this course.
 - [VMWare Blogs](https://blogs.vmware.com/learning)
 - [System Design Primer](https://github.com/donnemartin/system-design-primer?tab=readme-ov-file)
 - [YouTube Playlist: ConceptandCoding - Patterns, Concepts and Samples of System Designs](https://www.youtube.com/@ConceptandCoding/videos)
+- [YouTube Playlist: ByteByteGo - Patterns, Concepts and Samples of System Designs](https://www.youtube.com/@ByteByteGo/videos)
 
 _All the diagrams were made using [Excalidraw](https://excalidraw.com) and are available [here](https://github.com/karanpratapsingh/system-design/tree/main/diagrams)._

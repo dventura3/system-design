@@ -2183,6 +2183,8 @@ https://blog.devgenius.io/why-distributed-locks-are-important-17dfef01a6db
 https://www.youtube.com/watch?v=gvIn5QBdGDk 
 or 
 Instana
+or
+https://www.datadoghq.com/videos/real-time-metrics-database/
 
 # Collect users behavioral data to derive insights
 
@@ -2294,5 +2296,8 @@ https://systemdesign.one/categories/
 # Useful Links
 
 - [System Design Interview Preparation Series](https://www.codekarle.com/) => very detailed explanation of system design architectures
-- [YouTube Playlist: ConceptandCoding - Patterns, Concepts and Samples of System Designs](https://www.youtube.com/@ConceptandCoding/videos)
 - [Bugfree](https://bugfree.ai/course) => course to gain knowledge about system designs. Good list of "types" of system design architecture which might be workth exploring
+- [YouTube Playlist: ConceptandCoding - Patterns, Concepts and Samples of System Designs](https://www.youtube.com/@ConceptandCoding/videos)
+- [YouTube Playlist: TechPrepYT - Samples of System Designs](https://www.youtube.com/@TechPrepYT/featured) => Samples of different system designs
+- [YouTube Playlist: Think Software - Samples of System Designs](https://www.youtube.com/@ThinkSoftware/videos) => Samples of different system designs
+- [Medium: Intresting System Designs Architetures](https://medium.com/@ishwarya1011.hidkimath)
