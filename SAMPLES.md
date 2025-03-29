@@ -24,6 +24,42 @@
 ![image](./diagrams/system-design-blueprint.webp)
 
 
+# Framework - Summary
+- List Functional, non-functional and non-mandatory requirements
+- Calculate the estimated capacity:
+  - Assumptions to calculate the TRAFFIC requirement:
+    1. Is read or write heavy system or is there a balance beweent reads and writes? What is the read:write ratio?
+    1. What is the num of users using the system (in total and in 1 day)
+    1. What is the average of users appling the most important action per day (for example "number of tweets published per day")?
+    1. What is the percentage of a specific type of action per day (for example "number of tweets with videos published per day")?
+  - Calculate the number of READ and WRITE requests per day
+  - Calculate the total number of requests per second
+  - Assumption to calcuate the STORAGE requirement:
+    1. Size of the message or video/img (calcualte them separately)
+    1. Data is stored per 10 years
+  - Calculate the amount of storage needed to store messages + videos/img per day and, then, per 10 years
+  - Calculate the Bandwidth per second => you can use the info about storage needed per day and dived per / (24h * 3600 secs)
+  - (OPTIONAL at this stage) Calculate the CACHE size requirement
+- Think to a first draft of data model => but this can be reviewed later on
+- Split the system based on features. Some Hints:
+  1. What is the main thing or issue the service that you want to design has to deal with. For example: Streaming platforms has to deal with big files and different type of devices; booking platforms has to dela with concurrency in booking something and dealing with payments; social networks has to main deal with fast and big amount of posts (so caching and pre-processing is a key topic)
+  1. Think to a story: If UserA wants to do this operation...
+  1. You could separate the "GET flow" from the "POST flow"
+- With Read-Heavy Systems, these are some key points to adopt:
+  1. Caching
+  1. Database Replication & sharding => adopt horizontal scalability (NoSQL DBs)
+  1. CDN
+  1. Load Balancing
+  1. Optimized Data Retrieval — indexing, sort key, data partitioning (often use Elastic Sarch DB)
+  1. Asynchronous Processing (Kafka, RabbitMQ)
+  1. Consistency is often the trade-off that you need to adopt. So, in the CAP theorem, you prioritise Availability and Partition tolerant over Consistency. One can achieve the consistency by choosing eventual consistency over strict consistency.
+
+
+# Type of Architetures to Explore
+
+![type-of-system-designs](./diagrams/system-design-types.png)
+
+
 # System Design Interviews
 
 System design is a very extensive topic and system design interviews are designed to evaluate your capability to produce technical solutions to abstract problems, as such, they're not designed for a specific answer. The unique aspect of system design interviews is the two-way nature between the candidate and the interviewer.
@@ -1743,6 +1779,12 @@ To make our system more resilient we can do the following:
 - Using multiple read replicas for our databases.
 - Multiple instances and replicas for our distributed cache.
 
+## Further Reference
+
+More links to look at:
+- [Video Streaming and Sharing Services](https://youtu.be/XAZqmLXy4kY?si=5JEIlDlxsdPuMdUO)
+
+
 # Uber
 
 Let's design an [Uber](https://uber.com) like ride-hailing service, similar to services like [Lyft](https://www.lyft.com), [OLA Cabs](https://www.olacabs.com), etc.
@@ -2171,11 +2213,28 @@ To make our system more resilient we can do the following:
 - Multiple instances and replicas for our distributed cache.
 - Exactly once delivery and message ordering is challenging in a distributed system, we can use a dedicated [message broker](https://karanpratapsingh.com/courses/system-design/message-brokers) such as [Apache Kafka](https://kafka.apache.org) or [NATS](https://nats.io) to make our notification system more robust.
 
+## Further Reference
+
+- [Video: Uber System to prepare System Design Interview](https://youtu.be/DGtalg5efCw?si=Qy2nemu-GPlltSKv)
+
+
+# Tinder
+
+https://youtu.be/vFizdRcuLOw?si=KO4tCtYRo4BfyppG
+and
+https://youtu.be/nfJj7SfQtZo?si=kShtVt0OVvxsYD06 
+
 
 # Flights Tickets Booking System
 
 https://blog.devgenius.io/why-distributed-locks-are-important-17dfef01a6db
+and
+https://youtu.be/m67Mjbx6DMY?si=qZHIVvXfKK1MBEW_
 
+
+# E-commerce
+
+https://youtu.be/2811UT5r5Jk?si=aUjYjemJ8XPWvQ38
 
 
 # Logging System
@@ -2185,6 +2244,7 @@ or
 Instana
 or
 https://www.datadoghq.com/videos/real-time-metrics-database/
+
 
 # Collect users behavioral data to derive insights
 
@@ -2282,7 +2342,8 @@ Main points of the solution:
 # URL Crawlers
 
 Reference: https://softwareengineering.stackexchange.com/questions/445649/workers-and-orchestrator
-
+and: https://medium.com/@ishwarya1011.hidkimath/system-design-web-crawler-a7dfbfd51474 
+and: https://youtu.be/5DTxuMDYvNc?si=N5TtXXE6omJv9GGK 
 
 # Type of System Design Architectures
 
@@ -2298,6 +2359,7 @@ https://systemdesign.one/categories/
 - [System Design Interview Preparation Series](https://www.codekarle.com/) => very detailed explanation of system design architectures
 - [Bugfree](https://bugfree.ai/course) => course to gain knowledge about system designs. Good list of "types" of system design architecture which might be workth exploring
 - [YouTube Playlist: ConceptandCoding - Patterns, Concepts and Samples of System Designs](https://www.youtube.com/@ConceptandCoding/videos)
-- [YouTube Playlist: TechPrepYT - Samples of System Designs](https://www.youtube.com/@TechPrepYT/featured) => Samples of different system designs
+- [YouTube Playlist: TechPrepYT - Samples of System Designs](https://www.youtube.com/@TechPrepYT/featured) => Samples of different system designs && Bonus [HERE](https://www.techprep.app/system-design/high-level-design)
 - [YouTube Playlist: Think Software - Samples of System Designs](https://www.youtube.com/@ThinkSoftware/videos) => Samples of different system designs
+- [YouTube Playlist: irtizahafiz - Samples of System Designs & other topics about system designs](https://www.youtube.com/@irtizahafiz/videos)
 - [Medium: Intresting System Designs Architetures](https://medium.com/@ishwarya1011.hidkimath)
