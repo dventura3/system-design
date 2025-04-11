@@ -41,18 +41,26 @@
   - Calculate the Bandwidth per second => you can use the info about storage needed per day and dived per / (24h * 3600 secs)
   - (OPTIONAL at this stage) Calculate the CACHE size requirement
 - Think to a first draft of data model => but this can be reviewed later on
-- Split the system based on features. Some Hints:
-  1. What is the main thing or issue the service that you want to design has to deal with. For example: Streaming platforms has to deal with big files and different type of devices; booking platforms has to dela with concurrency in booking something and dealing with payments; social networks has to main deal with fast and big amount of posts (so caching and pre-processing is a key topic)
+- Split the system based on features. Some hints:
+  1. What is the main thing or issue or feature the service that you want to design has to deal with? For example: Streaming platforms has to deal with big files and different type of devices; booking platforms has to dela with concurrency in booking something and dealing with payments; social networks has to main deal with fast and big amount of posts (so caching and pre-processing is a key topic)
   1. Think to a story: If UserA wants to do this operation...
   1. You could separate the "GET flow" from the "POST flow"
-- With Read-Heavy Systems, these are some key points to adopt:
+  1. What are the type of users using the system? For example in X we have active/vip/passive users...in Uber we have customers and drivers...etc. - OR - For example in Uber you have drivers and customers.
+  1. Think of the API (especially the body of the request/response) which you want to implement can help to identify the architecture. For example: In Uber system, you have to split the API in 
+    1. POST /tariff with body {currentUserLoction, destinationLocation} => return a tariffID with a list of estimated tarifs => Once the user click on/select one of the tariffs, it invoke
+    2. POST /ride with body {tariffID, selectedOption} => return a rideID after having created a new ride request in the kafka queue.
+- With Read-Heavy systems, these are some key points to adopt:
   1. Caching
-  1. Database Replication & sharding => adopt horizontal scalability (NoSQL DBs)
+  1. Database Replication & Sharding => adopt horizontal scalability (NoSQL DBs)
   1. CDN
   1. Load Balancing
   1. Optimized Data Retrieval — indexing, sort key, data partitioning (often use Elastic Sarch DB)
   1. Asynchronous Processing (Kafka, RabbitMQ)
   1. Consistency is often the trade-off that you need to adopt. So, in the CAP theorem, you prioritise Availability and Partition tolerant over Consistency. One can achieve the consistency by choosing eventual consistency over strict consistency.
+  1. Pre-compute work is foundamental to have faster data retrival
+- With Write-Heavy systems, these are some key points to adopt:
+  1. Strict Consistency is often necessary
+
 
 
 # Type of Architetures to Explore
