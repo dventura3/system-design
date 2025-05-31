@@ -7,7 +7,8 @@
   - [WhatsApp](#whatsapp)
   - [Twitter](#twitter)
   - [Netflix](#netflix)
-  - [Uber](#uber) 
+  - [Uber](#uber)
+  - [Tinder](#tinder)
   - [Flights Tickets Booking System](#flights-tickets-booking-system)
   - [Logging System](#logging-system)
   - [Collect users behavioral data]()
@@ -27,19 +28,19 @@
 # Framework - Summary
 - List Functional, non-functional and non-mandatory requirements
 - Calculate the estimated capacity:
-  - Assumptions to calculate the TRAFFIC requirement:
-    1. Is read or write heavy system or is there a balance beweent reads and writes? What is the read:write ratio?
-    1. What is the num of users using the system (in total and in 1 day)
-    1. What is the average of users appling the most important action per day (for example "number of tweets published per day")?
-    1. What is the percentage of a specific type of action per day (for example "number of tweets with videos published per day")?
-  - Calculate the number of READ and WRITE requests per day
-  - Calculate the total number of requests per second
-  - Assumption to calcuate the STORAGE requirement:
-    1. Size of the message or video/img (calcualte them separately)
-    1. Data is stored per 10 years
-  - Calculate the amount of storage needed to store messages + videos/img per day and, then, per 10 years
-  - Calculate the Bandwidth per second => you can use the info about storage needed per day and dived per / (24h * 3600 secs)
-  - (OPTIONAL at this stage) Calculate the CACHE size requirement
+  1. Assumptions to calculate the TRAFFIC requirement:
+      1. Is read or write heavy system or is there a balance beweent reads and writes? What is the read:write ratio?
+      1. What is the num of users using the system (in total and in 1 day)
+      1. What is the average of users appling the most important action per day (for example "number of tweets published per day")?
+      1. What is the percentage of a specific type of action per day (for example "number of tweets with videos published per day")?
+  1. Calculate the number of READ and WRITE requests per day
+  1. Calculate the total number of requests per second
+  1. Assumption to calcuate the STORAGE requirement:
+      1. Size of the message or video/img (calcualte them separately)
+      1. Data is stored per 10 years
+  1. Calculate the amount of storage needed to store messages + videos/img per day and, then, per 10 years
+  1. Calculate the Bandwidth per second => you can use the info about storage needed per day and dived per / (24h * 3600 secs)
+  1. (OPTIONAL at this stage) Calculate the CACHE size requirement
 - Think to a first draft of data model => but this can be reviewed later on
 - Split the system based on features. Some hints:
   1. What is the main thing or issue or feature the service that you want to design has to deal with? For example: Streaming platforms has to deal with big files and different type of devices; booking platforms has to dela with concurrency in booking something and dealing with payments; social networks has to main deal with fast and big amount of posts (so caching and pre-processing is a key topic)
@@ -47,9 +48,13 @@
   1. You could separate the "GET flow" from the "POST flow"
   1. What are the type of users using the system? For example in X we have active/vip/passive users...in Uber we have customers and drivers...etc. - OR - For example in Uber you have drivers and customers.
   1. Think of the API (especially the body of the request/response) which you want to implement can help to identify the architecture. For example: In Uber system, you have to split the API in 
-    1. POST /tariff with body {currentUserLoction, destinationLocation} => return a tariffID with a list of estimated tarifs => Once the user click on/select one of the tariffs, it invoke
-    2. POST /ride with body {tariffID, selectedOption} => return a rideID after having created a new ride request in the kafka queue.
-- With Read-Heavy systems, these are some key points to adopt:
+      1. POST /tariff with body {currentUserLoction, destinationLocation} => return a tariffID with a list of estimated tarifs => Once the user click on/select one of the tariffs, it invoke
+      1. POST /ride with body {tariffID, selectedOption} => return a rideID after having created a new ride request in the kafka queue.
+  1. Consider splitting an intense and time-consuming job in two separate phases. For example to process videos or download a big amount of data:
+      1. a backend service receives the request to process something
+      1. the same service generates a new events to place a queue and replyes almost immediatly to the user saying "the processing is on-going"
+      1. the processing is done in background and the user is notified only when the processing is terminated => use of a notification system
+- With **Read-Heavy systems**, these are some key points to adopt:
   1. Caching
   1. Database Replication & Sharding => adopt horizontal scalability (NoSQL DBs)
   1. CDN
@@ -58,12 +63,21 @@
   1. Asynchronous Processing (Kafka, RabbitMQ)
   1. Consistency is often the trade-off that you need to adopt. So, in the CAP theorem, you prioritise Availability and Partition tolerant over Consistency. One can achieve the consistency by choosing eventual consistency over strict consistency.
   1. Pre-compute work is foundamental to have faster data retrival
-- With Write-Heavy systems, these are some key points to adopt:
+- With **Write-Heavy systems**, these are some key points to adopt:
   1. Strict Consistency is often necessary
 
 
 
 # Type of Architetures to Explore
+
+Types of System Design Architectures to explore: https://bugfree.ai/course/system-design-interview/url-shortening-service
+And solutions https://blog.bugfree.ai/?_gl=1*142znum*_gcl_au*Mjk1ODU4MzQwLjE3NDA4MjIyNDk. 
+
+Other great samples:
+https://systemdesign.one/categories/ 
+
+Other great samples:
+https://www.techprep.app/system-design/high-level-design
 
 ![type-of-system-designs](./diagrams/system-design-types.png)
 
@@ -2353,13 +2367,6 @@ Reference: https://softwareengineering.stackexchange.com/questions/445649/worker
 and: https://medium.com/@ishwarya1011.hidkimath/system-design-web-crawler-a7dfbfd51474 
 and: https://youtu.be/5DTxuMDYvNc?si=N5TtXXE6omJv9GGK 
 
-# Type of System Design Architectures
-
-Type of System Deisgn Architectures to explore: https://bugfree.ai/course/system-design-interview/url-shortening-service
-And solutions https://blog.bugfree.ai/?_gl=1*142znum*_gcl_au*Mjk1ODU4MzQwLjE3NDA4MjIyNDk. 
-
-Other great samples:
-https://systemdesign.one/categories/ 
 
 
 # Useful Links

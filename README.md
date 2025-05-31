@@ -93,6 +93,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Scaling Applications: Give Me Numbers](#scaling-applications-give-me-numbers)
   - [Response Time: give me numbers](#response-time-give-me-numbers)
   - [API Pagination](#api-pagination)
+  - [Design Patterns](#design-patterns)
 
 - **Chapter V**
 
@@ -4173,6 +4174,131 @@ TODO
 
 https://www.youtube.com/watch?v=14K_a2kKTxU
 
+
+# Design Patterns
+
+### Builder
+
+The Builder pattern is a design pattern used to crate and instanciate a complex objects that has many properties. It allows for the creation of different representations of a product while isolating the construction code from the product's business logic. This is particularly useful when an object has many optional parameters or when you need to create variations of the same object with different configurations.
+
+Indeed, if you have an object with many optional parameters which could be present or not, instead of creating MANY different alternatives and variations of constructors based on the input params, we can use the "builder" pattern.
+
+
+Sample with just Car and Builder:
+
+```
+// Product
+class Car {
+  private String make;
+  private String model;
+  private int year;
+  private boolean gps;
+  private boolean sunroof;
+
+  // Constructor is now private, only accessible through the builder
+  private Car (CarBuilder builder) {
+    this.make = builder.make;
+    this.model = builder.model;
+    this.year = builder.year;
+    this.gps = builder.gps;
+    this.sunroof = builder.sunroof;
+  }
+
+  // Builder Class
+  public static class CarBuilder {
+    private String make;
+    private String model;
+    private int year;
+    private boolean gps = false;
+    private boolean sunroof = false;
+
+    public CarBuilder (String make, String model) {
+      this.make = make;
+      this.model = model;
+    }
+
+    public CarBuilder setYear(int year) {
+      this.year = year;
+      return this; // Fluent Interface
+    }
+
+    public CarBuilder addGPS() {
+      this.gps = true;
+      return this; // Fluent Interface
+    }
+
+    public CarBuilder addSunroof() {
+      this.sunroof = true;
+      return this; // Fluent Interface
+    }
+
+    public Car build() {
+      return new Car(this); // Returns the final product
+    }
+  }
+
+  // Getters for accessing the object's attributes
+  // ...
+}
+```
+
+In the main function you create a CarBuilder and then get the real Car object using the `build` function.
+The advantage is that the builder has just a simple constructor which allows to set only few of the long list of properties that "Car" has. Then, if you want to customised the Car object, you can set some properties using the "set" function of the builder.
+
+```
+class Application
+    public static void main() {
+      CarBuilder builder = new CarBuilder("Yunday", "Y x40");
+      builder.addGPS();
+
+      Car my_yunday = builder.build();
+    }
+```
+
+In a more complex scenarion you actually use there classes/inferface:
+- Builder: This is an interface that defines the construction steps for the product. 
+- Concrete Builder: This class implements the Builder interface and provides the specific implementation for constructing the product. 
+- Director: This class orchestrates the construction process by using a specific Builder. 
+- Product: This is the complex object that is being constructed.
+
+For example, imagine you're building a car object. The Builder pattern could be used to create different car models (e.g., sedan, SUV, sports cars) with different features (e.g., GPS, sunroof, leather seats) by using different concrete builders.
+
+We would have:
+- Different classes to represent the types of cars, such as SUV, Sedan, Sports, etc.
+- Builder as an interface which expose common methods
+- Differente "concrete builders" such as "SUVBuilder", "SedanBuilder", "SportsBuilder" etc... each one specilised based on the type of car
+- Director is used to construct a builder following a specific steps of actions
+
+Sample of director:
+```
+// The director is only responsible for executing the building
+// steps in a particular sequence. It's helpful when producing
+// products according to a specific order or configuration.
+// Strictly speaking, the director class is optional, since the
+// client can control builders directly.
+class Director is
+    method constructSportsCar(builder: Builder) is
+        builder.reset()
+        builder.setSeats(2)
+        builder.setEngine(new SportEngine())
+        builder.setTripComputer(true)
+        builder.setGPS(true)
+
+    method constructSUV(builder: Builder) is
+        // ...
+```
+
+And the main would be like this:
+```
+class Application is
+
+    method makeCar() is
+        director = new Director()
+
+        CarBuilder builder = new CarBuilder()
+        director.constructSportsCar(builder)
+        Car car = builder.build()
+```
 
 
 # OAuth 2.0 and OpenID Connect (OIDC)
