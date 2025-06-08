@@ -92,7 +92,7 @@ _This course is also available on my [website](https://karanpratapsingh.com/cour
   - [Virtual Machines (VMs) and Containers](#virtual-machines-vms-and-containers)
   - [Scaling Applications: Give Me Numbers](#scaling-applications-give-me-numbers)
   - [Response Time: give me numbers](#response-time-give-me-numbers)
-  - [API Pagination](#api-pagination)
+  - [API Pagination and Filtering](#api-pagination-and-filtering)
   - [Design Patterns](#design-patterns)
 
 - **Chapter V**
@@ -4170,9 +4170,148 @@ Considerations:
 TODO
 
 
-# API Pagination
+# API Pagination and Filtering
 
-https://www.youtube.com/watch?v=14K_a2kKTxU
+Useful Links:
+- https://www.youtube.com/watch?v=14K_a2kKTxU => Pagination using Offsets vs Cursor Based
+- https://stackoverflow.com/questions/13872273/api-pagination-best-practices => Option A: Keyset Pagination with a Timestamp && Option B: Extended Keyset Pagination with a Continuation Token
+- https://phauer.com/2017/web-api-pagination-continuation-token/ => The full article about Opiton A/B described in the stackoverflow answer in the link above. Timestamp Pagination and Timestamp_Offset_Checksum Pagination
+- https://phauer.com/2018/web-api-pagination-timestamp-id-continuation-token/ => Timestamp_ID Pagination
+- https://cloud.ibm.com/apidocs/iam-identity-token-api#list-api-keys => IAM get list of Api Keys
+
+What is pagination? Pagination is used when an API returns a list of resources, so long that it's better to split it in chuncks. Pagination is the process used to retrieve a subset of resources and determine what resources will be returned in the next/previous call to the API.
+
+Pagination is different from filtering:
+- **Pagination** does not apply filters to the data, but just chuncks them in subset => we have pagination when just a chunck of data are returned.
+- **Filtering** is when the client request a list of resources that satisfy some conditions => we have filtering when in the GET requests we use "query parameters" to determine the subset of results which match the query.
+
+There are different approaching to implement the Pagination. The most common are:
+1. Offset Pagination. This approach use "page size (so-called limit) + offset"
+2. Cursor Based Pagination. The implementation of this approach can be done in different ways. The most popular implementations are:
+  a. Keyset Pagination with a Timestamp
+  c. Timestamp_ID Pagination
+
+
+## Offset Pagination: use page size + offset
+
+A common pagination approach is "offset pagination". The client uses the parameters limit (called also page size) and offset to page through the elements.
+
+Example - Supposing there are 250 resources:
+1. @GET /elements?limit=100             => the client receives the first 100 elements.
+2. @GET /elements?limit=100&offset=100  => the client receives the next 100 element.
+3. @GET /elements?limit=100&offset=200  => the client receives only 50 elements. So that's the end.
+
+To implement this approahc is pretty simple. The basic SQL query which you would use to implement the "offset pagination" is:
+`SELECT * FROM element_db WHERE LIMIT 100 AND OFFSET 200`.
+
+This approach has some drawbacks:
+- Slow => The offset pagination has problem wiht large dataset when the offset gets bigger and query gets slower. An issue here is the OFFSET "keyword" that is used in the server’s database query. **This happens because the database has to process every row up to the offset before that it can return results**. So, this approach is incredibly slow when it comes to tables with millions of entries. There is no index involved that may speed up our queries.
+- Miss records or show them twice => It’s really easy to miss elements if the element order changes during two requests. If an element of a previous request is deleted, one element of the following page moves up to a page that has already been delivered. And if a new element is added in the data of the previous chunk of data, all the data are shifted by one position, and this could cause to return the same data twice.
+
+![Pagination-offset-issue](./diagrams/pagination-offset-issue.png)
+
+Side note: Often, the server sends the total amount of all elements in the response (total or count). This may appear handy. But in practice, this has performance impacts as an additional expensive COUNT has to be executed against the database. But most important, most clients don’t need this information anyway. They are only interested in the next page (and maybe the previous one). Random page access is rarely required (e.g. “give me the 24. of 230 pages”). In this case, the client would need to know the total amount of elements to calculate the number of possible pages.
+
+
+## Cursor Based Pagination
+
+To solve the issues that the offset pagination causes, we can use Curso based pagination.
+The approach of the cursor based pagination is the following:
+- we pick a colum which we have defined an index into (i.e. an indexed colum), such as an colum with IDs or timestamp => this will be our "cursor" (i.e. the last element sent to the client)
+- we hash the value of the "cursor" for security reason
+![Pagination-hash-cursor](./diagrams/pagination-hash-cursor.png)
+- when the client request the next page, it will sent the last seen cursor value in the request.
+- the server, use this value to fetch the next chunck of data
+- the server, also calculate the next "cursor" and send it back to the client in the response.
+![Pagination-cursor-applied](./diagrams/pagination-cursor-applied.png)
+
+NB: Use this approach for fast-changing and large data set!
+
+### Keyset Pagination with a Timestamp
+
+Keyset Pagination with a Timestamp leverage on an indexed column (usually a timestamp column like date_created or date_modified). The client uses the timestamp of the last element in the last page as the parameter for the next request.
+
+Usually, the entities have a timestamp that states their creation or modification time. This timestamp can be used for pagination: Just pass the timestamp of the last element as the query parameter for the next request. The server, in turn, uses the timestamp as a filter criterion (e.g. SQL query will use the statement `WHERE modificationDate >= receivedTimestampParameter`)
+
+Example:
+1. @GET /elements?pageSize=100 => the client receives the oldest 100 elements. The last element of the page has the `date_modified` field  with 1504224000 (= Sep 1, 2017 12:00:00 AM)
+2. @GET /elements?pageSize=100&modifiedSince=1504224000 => the client receives the 100 elements since 1504224000. The last element of the page was modified on 1506816000. And so on.
+
+The response to the GET requests will look like this:
+```
+{
+    "elements": [
+        {"data": "data", "modificationDate": 1512757070}
+        {"data": "data", "modificationDate": 1512757071}
+        {"data": "data", "modificationDate": 1512757072}
+    ],
+    "pagination": {
+        "lastModificationDate": 1512757072,
+        "nextPage": "https://domain.de/api/elements?modifiedSince=1512757072"
+    }
+}
+```
+
+The good thing of this approach is that the table is indexed based on the colum used by the cursor.
+Using the "timestamp" in the SQL query `WHERE modificationDate >= receivedTimestampParameter` (instead of using the offset and limit in the sql query), avoid us to have to scan the whole table! I can directly accessing rows without scanning all preciding once.
+
+This approach is easy to implement, fast and should be good enough for many use cases. But there are still drawbacks:
+- Endless loops => We can end up in endless loops if all elements of a page have the same timestamp. In practice, this can easily happen after a bulk update of many elements. The only thing we can do here is to make endless loops less likely by:
+        - Always use a high page size.
+        - Use timestamps with millisecond precision (and we can’t take that for granted. For instance, before MySQL 5.6.4 there were only timestamp columns with second precision).
+- Yoy may deliver many elements multiple times => The client may receive and process the same elements multiple times when many elements have the same timestamp and they are overlapping two pages.
+
+### Timestamp_ID Pagination
+
+THe main difference between this approach and the previous one is that the structure of the "token" sent to the client to keep track of the last element in the page that was sent in the previous response.
+Format of Timestamp_ID
+- The Timestamp of the last element of the current page. It’s usually mapped to a column like modificationDate or creationDate.
+- The ID (primary key) of the last element of the current page. This is necessary to distinguish between elements with the same timestamp. Usually the ID is not directly sent, but the `checksum(ID)` is actually sent (this is for security reasons).
+
+Example of datareturned by this query:
+```
+{
+    "elements": [
+        {"data": "data", "modificationDate": 1512757070, "id": "ID001" }
+        {"data": "data", "modificationDate": 1512757072, "id": "ID002"}
+        {"data": "data", "modificationDate": 1512757072, "id": "ID003"}
+    ],
+    "pagination": {
+        "continuationToken": "1512757072_2",
+        "nextPage": "https://domain.de/api/elements?continuationToken=1512757072_ID002"
+    }
+}
+```
+The token `1512757072_ID002` points to the last element of the page and states "the client got only the first element with the timestamp 1512757072". This way, the server knows where to continue.
+
+
+The implementation boils down to a simple but smart SQL WHERE clause:
+```
+-- Given that T is the timestamp and I is the id contained in the token.
+SELECT * FROM elementTable
+WHERE (
+  timestampColumn > T 
+  OR (timestampColumn = T AND idColumn > I)
+)
+AND timestampColumn < now()
+ORDER BY timestampColumn asc, idColumn asc;
+-- The ids in the idColumn must be unique (out-of-the-box for primary keys)
+-- We need an index on both columns timestampColumn and idColumn
+```
+
+Let’s consider the following use cases to see this approach in action.
+
+In case of multiple elements with the same timestamp 20, we need the ID part of the token. Otherwise, we would miss all elements with the timestamp 20 (if we would only query for timestamp > 20). But adding the clause timestamp = 20 AND id > 3 will include the elements 4 and 5 in the next page.
+
+![Pagination-wiht-timestamp-id](./diagrams/pagination-with-timestamp_id.png)
+
+
+Let’s assume that the timestamp of an element (like the date of the last modification) is updated (i.e. set to a higher value) during two page requests. Take a look at element 3 with the timestamp 20. Its timestamp is set to 99 after page 1 is delivered. So it moves to the very end of the element sequence. Hence, it’s delivered twice to the client - or even multiple times. The client has to deal with it. But the most important point here is that we won’t miss any element (like element 4).
+
+![Pagination-wiht-timestamp-id-and-update](./diagrams/pagination-with-timestamp_id-and-update.png)
+
+To know why we would need to use `AND timestampColumn < now()` read [HERE](https://phauer.com/2018/web-api-pagination-timestamp-id-continuation-token/#what-about-and-timestampcolumn--now).
+
 
 
 # Design Patterns
