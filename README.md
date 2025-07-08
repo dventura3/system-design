@@ -1945,17 +1945,35 @@ Two-phase commit consists of the following phases:
 
 The prepare phase involves the coordinator node collecting consensus from each of the participant nodes. The transaction will be aborted unless each of the nodes responds that they're _prepared_.
 
+Steps:
+- The coordinator sends a Prepare request to all participants.
+- Each participant checks if it can complete the transaction and responds with either a Yes (prepared) or No (abort).
+- If any participant responds with a No, the process halts, and the transaction is rolled back.
+
 **Commit phase**
 
 If all participants respond to the coordinator that they are _prepared_, then the coordinator asks all the nodes to commit the transaction. If a failure occurs, the transaction will be rolled back.
+
+Steps:
+- If all participants respond with Yes, the coordinator sends a Commit command, and all participants commit the transaction.
+- If any participant responds with No, the coordinator sends an Abort command to rollback the transaction across all participants.
+
+### Example Scenario for 2PC
+Imagine an e-commerce website handling an order transaction:
+- When a customer places an order, the e-commerce system needs to check the inventory (whether items are in stock), payment processing (funds availability), and delivery system (delivery partner availability).
+- The coordinator (order system) sends a Prepare request to each component.
+- If all components confirm they are ready, the coordinator proceeds with Commit. If any component indicates an issue (e.g., insufficient stock), the coordinator aborts the transaction to maintain consistency.
 
 ### Problems
 
 Following problems may arise in the two-phase commit protocol:
 
 - What if one of the nodes crashes?
-- What if the coordinator itself crashes?
-- It is a blocking protocol.
+- What if the coordinator itself crashes? => If the coordinator fails during the Commit Phase, some participants may not receive the final decision.
+- It is a blocking protocol. => It can result in blocking (participants waiting indefinitely), especially if the coordinator fails to send a response.
+
+### When to Use 2PC
+2PC is ideal for systems where high availability is less of a concern, and **network failures are rare**. It is often used in financial systems or enterprise resource planning (ERP) systems, where consistency is more critical than availability.
 
 ## Three-phase commit
 
@@ -1971,20 +1989,46 @@ Three-phase commit consists of the following phases:
 
 This phase is the same as the two-phase commit.
 
+Steps:
+- Similar to 2PC, the coordinator sends a Prepare request to participants, asking if they can commit the transaction.
+- Each participant responds with Yes or No.
+
 **Pre-commit phase**
 
 Coordinator issues the pre-commit message and all the participating nodes must acknowledge it. If a participant fails to receive this message in time, then the transaction is aborted.
+
+Steps:
+- If all participants respond Yes, the coordinator sends a Pre-Commit message, indicating the transaction is likely to be committed.
+- Participants acknowledge the Pre-Commit, preparing to commit the transaction but not yet completing it.
 
 **Commit phase**
 
 This step is also similar to the two-phase commit protocol.
 
+Steps:
+- If all participants acknowledge the Pre-Commit, the coordinator sends the Commit command.
+- If any participant fails to acknowledge the Pre-Commit, the transaction is Aborted.
+
 ### Why is the Pre-commit phase helpful?
-
 The pre-commit phase accomplishes the following:
-
 - If the participant nodes are found in this phase, that means that _every_ participant has completed the first phase. The completion of prepare phase is guaranteed.
-- Every phase can now time out and avoid indefinite waits.
+- Every phase can now time out and avoid indefinite waits. => 3PC mitigates blocking issues by adding a timeout mechanism, allowing participants to autonomously decide to commit or abort if they don’t receive further messages from the coordinator.
+
+### Example Scenario for 3PC
+Imagine a financial application processing a transaction across multiple bank accounts:
+- A transaction coordinator oversees several bank databases to transfer funds between accounts.
+- The coordinator sends a Prepare request to all databases.
+- If all respond positively, the coordinator sends a Pre-Commit message to ensure all are ready.
+- After receiving acknowledgments, the coordinator finally sends the Commit request to finalize the transaction. If any bank fails to acknowledge, the transaction is aborted.
+
+# Advantages of 3PC
+3PC reduces the likelihood of indefinite blocking, particularly helpful in situations with unreliable networks:
+- Timeout Mechanism: Allows participants to make autonomous decisions if they don’t hear back from the coordinator.
+- Improved Fault Tolerance: Reduces the risk of hanging transactions.
+
+# When to Use 3PC
+3PC is ideal for high-availability, fault-tolerant systems where **network interruptions are more likely**. Use cases include distributed databases with geo-redundant setups or microservices architectures where network stability can vary across services.
+
 
 ## Sagas
 
