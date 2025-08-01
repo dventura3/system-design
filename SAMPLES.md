@@ -2377,4 +2377,5 @@ and: https://youtu.be/5DTxuMDYvNc?si=N5TtXXE6omJv9GGK
 - [YouTube Playlist: TechPrepYT - Samples of System Designs](https://www.youtube.com/@TechPrepYT/featured) => Samples of different system designs && Bonus [HERE](https://www.techprep.app/system-design/high-level-design)
 - [YouTube Playlist: Think Software - Samples of System Designs](https://www.youtube.com/@ThinkSoftware/videos) => Samples of different system designs
 - [YouTube Playlist: irtizahafiz - Samples of System Designs & other topics about system designs](https://www.youtube.com/@irtizahafiz/videos)
-- [Medium: Intresting System Designs Architetures](https://medium.com/@ishwarya1011.hidkimath)
+- [Medium: A lot of intresting System Design Architetures @ishwarya1011.hidkimath](https://medium.com/@ishwarya1011.hidkimath)
+- [Medium: A lot of intresting System Design Architetures @ankitviddya](https://medium.com/@ankitviddya)
