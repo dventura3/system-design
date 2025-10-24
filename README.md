@@ -1929,7 +1929,7 @@ Now, let's look at some popular solutions for distributed transactions:
 
 ## Two-Phase commit
 
-![two-phase-commit](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-II/distributed-transactions/two-phase-commit.png)
+![two-phase-commit](/diagrams/2phase_commit.png)
 
 The two-phase commit (2PC) protocol is a distributed algorithm that coordinates all the processes that participate in a distributed transaction on whether to commit or abort (roll back) the transaction.
 
@@ -1943,7 +1943,7 @@ Two-phase commit consists of the following phases:
 
 **Prepare phase**
 
-The prepare phase involves the coordinator node collecting consensus from each of the participant nodes. The transaction will be aborted unless each of the nodes responds that they're _prepared_.
+The prepare phase involves the coordinator (also called "transaction manager") node collecting consensus from each of the participant nodes. The transaction will be aborted unless each of the nodes responds that they're _prepared_.
 
 Steps:
 - The coordinator sends a Prepare request to all participants.
