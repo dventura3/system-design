@@ -1775,7 +1775,12 @@ There's no right answer to whether our application needs an ACID or a BASE consi
 
 # CAP Theorem
 
-CAP theorem states that a distributed system can deliver only two of the three desired characteristics Consistency, Availability, and Partition tolerance (CAP).
+CAP Theorem applies to any distributed system — SQL or NoSQL. It's not DB-specific at all. It's a fundamental theorem about distributed computing.
+
+CAP theorem states that a distributed system can only guarantee 2 of these 3 properties simultaneously:
+- Consistency: every read receives the most recent write (or an error)
+- Availability: every request receives a response (no errors), though it might be stale (i.e. old data)
+- Partition tolerance (CAP): the system keeps working even if network communication between nodes breaks
 
 ![cap-theorem](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-II/cap-theorem/cap-theorem.png)
 
@@ -1795,6 +1800,7 @@ Availability means that any client making a request for data gets a response, ev
 
 Partition tolerance (also said "partitioning") means the system continues to work despite message loss or partial failure. A system that is partition-tolerant can sustain any amount of network failure that doesn't result in a failure of the entire network. Data is sufficiently replicated across combinations of nodes and networks to keep the system up through intermittent outages.
 
+
 ## Consistency-Availability-Partitioning Tradeoff
 
 We live in a physical world and can't guarantee the stability of a network, so distributed databases must choose a tradeoff between Partition Tolerance (P), Consistency (C) and Availability (A).
@@ -1803,33 +1809,86 @@ We live in a physical world and can't guarantee the stability of a network, so d
 
 A CA database delivers consistency and availability across all nodes. It can't do this if there is a partition between any two nodes in the system, and therefore can't deliver fault tolerance.
 
-**Example**: [PostgreSQL](https://www.postgresql.org), [MariaDB](https://mariadb.org).
+> NB: In real scenario, this case can't exist in a distributed system!
+> So CA isn't a "real distributed choice" — it's more "I'm not truly distributed, and that's a conscious decision."
+
+**Can CA Actually Happen in Real Scenarios?**
+
+This is the most misunderstood part of CAP. Technically CA is only achievable if you give up distribution entirely.
+
+The reasoning is:
+- In any real network, partitions will happen eventually (cables fail, pods restart, latency spikes)
+- If your system can't tolerate partitions, it either goes down or behaves incorrectly
+- So "choosing CA" really means "I'm running a single node or tightly coupled cluster and accepting the risk"
+
+Example:
+Single Postgres instance + replicas (reads only from primary) => There is	No real distribution of writes (one source of truth). In this case you achieve CA but just becasue, at the end, is like not having a distributed systems for "writes".
 
 ### CP database
 
-A CP database delivers consistency and partition tolerance at the expense of availability. When a partition occurs between any two nodes, the system has to shut down the non-consistent node until the partition is resolved.
+A CP database delivers consistency and partition tolerance at the expense of availability. 
+When a partition occurs between any two nodes, the system has to shut down the non-consistent node until the partition is resolved (there will be downtime and service temporarily unavailability).
 
-**Example**: [MongoDB](https://www.mongodb.com), [Apache HBase](https://hbase.apache.org).
+Choose CP when:
+- Data correctness is critical (banking, inventory, medical records)
+- You'd rather return an error than a wrong answer
+- Users can tolerate occasional unavailability
 
 ### AP database
 
 An AP database delivers availability and partition tolerance at the expense of consistency. When a partition occurs, all nodes remain available but those at the wrong end of a partition might return an older version of data than others. When the partition is resolved, the AP databases typically re-syncs the nodes to repair all inconsistencies in the system.
 
-**Example**: [Apache Cassandra](https://cassandra.apache.org), [CouchDB](https://couchdb.apache.org).
+Choose AP when:
+- Availability is critical (social media, streaming, shopping carts)
+- Stale data is acceptable or reconcilable
+- You'd rather show something slightly wrong than nothing at all
+
+### Intuitive Example
+Imagine a bank with two branches (Node A and Node B), both holding your account balance of €1000. The network link between them goes down (this is the "partition").
+
+You go to Branch A and withdraw €500.
+Your friend simultaneously goes to Branch B. What should happen?
+
+1. Case 1: CP (Consistency + Partition Tolerance) — e.g. HBase, Zookeeper, MongoDB (default)
+
+Branch B refuses to serve your friend. It says "I can't confirm the current balance, so I won't respond."
+
+You get consistency (no wrong answer) but sacrificed availability (B is down from the user's perspective).
+
+Real world: "Our system is temporarily unavailable"
+
+2. Case 2: AP (Availability + Partition Tolerance) — e.g. Cassandra, CouchDB, DynamoDB
+
+Branch B serves your friend and shows €1000. Both withdrawals go through. When the network heals, the system reconciles the conflict somehow (last write wins, merge, etc.)
+
+You get availability (always responds) but sacrificed consistency (stale/conflicting data).
+
+Real world: two people book the same last seat on a flight, resolved later
+
+3. Case 3: CA (Consistency + Availability) — e.g. PostgreSQL, MySQL (single node)
+
+Both branches are always in sync and always available... but only because there's no network partition to tolerate — i.e. it's effectively a single node.
 
 # PACELC Theorem
 
-The PACELC theorem is an extension of the CAP theorem. The CAP theorem states that in the case of network partitioning (P) in a distributed system, one has to choose between Availability (A) and Consistency (C).
+The CAP theorem states that in the case of network partitioning (P) in a distributed system, one has to choose between Availability (A) and Consistency (C).
 
-PACELC extends the CAP theorem by introducing latency (L) as an additional attribute of a distributed system. The theorem states that else (E), even when the system is running normally in the absence of partitions, one has to choose between latency (L) and consistency (C).
+PACELC **extends** the CAP theorem by introducing latency (L) as an additional attribute of a distributed system. 
+
+The theorem states:
+> Even when the system is running normally (no partition), you still trade off Latency vs Consistency.
 
 _The PACELC theorem was first described by [Daniel J. Abadi](https://scholar.google.com/citations?user=zxeEF2gAAAAJ)._
 
 ![pacelc-theorem](https://raw.githubusercontent.com/karanpratapsingh/portfolio/master/public/static/courses/system-design/chapter-II/pacelc-theorem/pacelc-theorem.png)
 
-PACELC theorem was developed to address a key limitation of the CAP theorem as it makes no provision for performance or latency.
+PACELC theorem was developed to address a key limitation of the CAP theorem as **it makes no provision for performance or latency**.
 
-For example, according to the CAP theorem, a database can be considered available if a query returns a response after 30 days. Obviously, such latency would be unacceptable for any real-world application.
+For example Cassandra is AP during partitions, but also trades consistency for low latency during normal operation — which is why it's so fast. 
+PostgreSQL is CP during partitions, and favors consistency over latency normally too.
+
+This is why database selection is never just "SQL vs NoSQL" — it's really about which tradeoffs match your application's needs.
+
 
 # Concurrency Control in DBs
 
@@ -1917,13 +1976,26 @@ If there isn't any roll-back or the transaction comes from the _committed state_
 
 # Distributed Transactions
 
-A distributed transaction is a set of operations on data that is performed across two or more databases. It is typically coordinated across separate nodes connected by a network, but may also span multiple databases on a single server.
+A distributed transaction is a set of operations on data that is performed across two or more databases or between different services. 
+It is typically coordinated across separate nodes connected by a network, but may also span multiple databases on a single server.
 
 ## Why do we need distributed transactions?
 
-Unlike an ACID transaction on a single database, a distributed transaction involves altering data on multiple databases. Consequently, distributed transaction processing is more complicated, because the database must coordinate the committing or rollback of the changes in a transaction as a self-contained unit.
+Distributed transactions involve **separate databases or separate nodes/services — not just different tables within the same database**.
 
-In other words, all the nodes must commit, or all must abort and the entire transaction rolls back. This is why we need distributed transactions.
+Unlike an ACID transaction on a single database, a distributed transaction involves altering data on **multiple databases**. Consequently, distributed transaction processing is more complicated, because all the nodes must commit, or all must abort and the entire transaction rolls back. This is why we need distributed transactions.
+
+Here's the breakdown:
+
+- Single DB, multiple tables => Regular transaction When you update multiple tables within the same database (even complex joins, cascades, etc.), this is a standard ACID transaction. The database engine handles atomicity natively — one commit, one rollback scope, no distribution problem. The DB's transaction manager owns everything.
+
+- Distributed transaction => Crosses system boundaries. A distributed transaction is needed when your operation spans:
+  - Two or more SEPARATE database instances even when 1 single service control them
+  - A database + a message broker (e.g., Postgres + Kafka)
+  - A database + an external API/service
+  - Microservices each owning their own DB
+
+This is where things get hard, because you no longer have a single transaction manager. You need **coordination protocols** like 2PC (Two-Phase Commit), 3PC (Three-Phase Commit) or eventual consistency patterns like the Saga pattern.
 
 Now, let's look at some popular solutions for distributed transactions:
 
@@ -2212,6 +2284,24 @@ An example:
 And using the flow diagram:
 
 ![optimistic-concurrency-control-flow](./diagrams/concurrency-optimistic-approach-flow.png)
+
+
+### Optimistic Control with Cloudant
+
+A regional Cloudant instance is a single CouchDB cluster, typically 3 nodes in the same region. It uses a master-master architecture internally — all 3 nodes can accept writes. But from your application's perspective it looks like one endpoint.
+Cloudant uses W=2, R=2, N=3 by default — sync quorum across the 3 internal nodes.
+
+When multiple PODs hit the same regional cluster simultaneously with the same document revision, you have to handle concurrency!
+Cloudant uses the concurrent write conflicts (MVCC) approach.
+
+Secnario: Multiple Pods, Same Regional Cloudant
+This is purely a **concurrency problem, not a replication conflict**. And Cloudant's **MVCC** handles it cleanly.
+
+![cloudant-concurrency-example](./diagrams/cloudant-concurrency-example.png)
+
+What a client should do when a `409` is retrieved? Apply an re-try logic (starting from reading the new version of the document).
+
+For a multiple pods + single regional Cloudant case: **no true CouchDB conflicts will occur**. You have a concurrency problem, not a replication conflict problem — and MVCC with retry is the right and sufficient solution.
 
 
 ## Pessimistic Concurrency Control (PCC)
